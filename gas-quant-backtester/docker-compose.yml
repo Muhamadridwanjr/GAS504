@@ -1,0 +1,21 @@
+services:
+  gas-quant-backtester:
+    build: .
+    container_name: gas-quant-backtester
+    ports:
+      - "9504:9504"
+    environment:
+      - PORT=9504
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=sqlite+aiosqlite:///./gas_backtest.db
+      - MARKET_DATA_URL=http://gas-feature-engine:9499
+      - REDIS_URL=redis://gas-redis:6379
+      - CACHE_TTL=3600
+    networks:
+      - gas-network
+    restart: always
+
+networks:
+  gas-network:
+    external: true
