@@ -1,0 +1,42 @@
+services:
+  gas-tradingplan-service:
+    build: .
+    container_name: gas-tradingplan-service
+    restart: unless-stopped
+    ports:
+      - "9602:9602"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:pass@gas-tradingplan-service-postgres:5432/gas_tradingplan
+    depends_on:
+      gas-tradingplan-service-postgres:
+        condition: service_started
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9602/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  gas-tradingplan-service-postgres:
+    image: postgres:15-alpine
+    container_name: gas-tradingplan-service-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: gas_tradingplan
+    volumes:
+      - pg_gas_tradingplan_service_data:/var/lib/postgresql/data
+    networks:
+      - gas-network
+
+networks:
+  gas-network:
+    external: true
+    name: gas-network
+
+volumes:
+  pg_gas_tradingplan_service_data:

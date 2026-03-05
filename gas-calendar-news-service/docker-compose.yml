@@ -1,0 +1,42 @@
+services:
+  gas-calendar-news-service:
+    build: .
+    container_name: gas-calendar-news-service
+    restart: unless-stopped
+    ports:
+      - "9601:9601"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:pass@gas-calendar-news-service-postgres:5432/gas_calendar
+    depends_on:
+      gas-calendar-news-service-postgres:
+        condition: service_started
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9601/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  gas-calendar-news-service-postgres:
+    image: postgres:15-alpine
+    container_name: gas-calendar-news-service-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: gas_calendar
+    volumes:
+      - pg_gas_calendar_news_service_data:/var/lib/postgresql/data
+    networks:
+      - gas-network
+
+networks:
+  gas-network:
+    external: true
+    name: gas-network
+
+volumes:
+  pg_gas_calendar_news_service_data:

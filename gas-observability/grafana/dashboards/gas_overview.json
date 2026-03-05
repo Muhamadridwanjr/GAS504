@@ -1,0 +1,85 @@
+{
+  "dashboard": {
+    "title": "GAS Services Overview",
+    "uid": "gas-overview",
+    "version": 1,
+    "schemaVersion": 39,
+    "refresh": "30s",
+    "tags": [
+      "gas",
+      "overview"
+    ],
+    "panels": [
+      {
+        "title": "Service Logs \u2014 All GAS Containers",
+        "type": "logs",
+        "datasource": {
+          "type": "loki",
+          "uid": "grafana-loki-datasource"
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki"
+            },
+            "editorMode": "code",
+            "expr": "{container=~\"gas-.*\"}",
+            "legendFormat": "{{container}}",
+            "queryType": "range",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "dedupStrategy": "none",
+          "enableLogDetails": true,
+          "prettifyLogMessage": false,
+          "showLabels": false,
+          "showTime": true,
+          "sortOrder": "Descending",
+          "wrapLogMessage": true
+        }
+      },
+      {
+        "title": "Error Logs (WARNING/ERROR level)",
+        "type": "logs",
+        "datasource": {
+          "type": "loki",
+          "uid": "grafana-loki-datasource"
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 24,
+          "x": 0,
+          "y": 12
+        },
+        "id": 2,
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki"
+            },
+            "editorMode": "code",
+            "expr": "{container=~\"gas-.*\"} |= \"error\" or {container=~\"gas-.*\"} |= \"ERROR\" or {container=~\"gas-.*\"} |= \"Exception\"",
+            "legendFormat": "{{container}}",
+            "queryType": "range",
+            "refId": "A"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {}
+  },
+  "overwrite": true,
+  "folderId": 0
+}

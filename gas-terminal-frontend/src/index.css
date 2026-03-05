@@ -1,0 +1,165 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* DARK THEME (Default) - FULL DARK */
+  --bg-main: #000000;
+  --bg-card: #0a0a0a;
+  --bg-panel: #0d0d0d;
+  --bg-hover: #151515;
+  --border-color: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: #aaaaaa;
+  --text-dim: #666666;
+  --accent: #fac815;
+  --accent-soft: rgba(250, 200, 21, 0.1);
+  --success: #10b981;
+  --danger: #ef4444;
+  --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
+  --glass: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme='light'] {
+  /* LIGHT THEME - FULL LIGHT */
+  --bg-main: #ffffff;
+  --bg-card: #f9f9f9;
+  --bg-panel: #ffffff;
+  --bg-hover: #f1f1f1;
+  --border-color: #e5e7eb;
+  --text-primary: #000000;
+  --text-secondary: #444444;
+  --text-dim: #777777;
+  --accent: #eab308;
+  --accent-soft: rgba(234, 179, 8, 0.1);
+  --success: #10b981;
+  --danger: #ef4444;
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
+  --glass: rgba(255, 255, 255, 0.9);
+}
+
+@layer base {
+  * {
+    @apply border-[var(--border-color)];
+  }
+
+  body {
+    @apply bg-[var(--bg-main)] text-[var(--text-primary)] font-sans antialiased selection:bg-[var(--accent)] selection:text-black;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  .font-display {
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .bg-glass {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+@keyframes pulse-dot-anim {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+.pulse-dot {
+  animation: pulse-dot-anim 1.5s ease-in-out infinite;
+}
+
+/* Custom ticker and news animations reused */
+.ticker-scroll {
+  animation: ticker 40s linear infinite;
+}
+
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.news-scroll {
+  animation: news 50s linear infinite;
+}
+
+@keyframes news {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.slide-in {
+  animation: slide-in 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes slide-in {
+  0% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+
+  10%,
+  90% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+.alert-bar {
+  animation: alert-bar 5s linear forwards;
+}
+
+@keyframes alert-bar {
+  0% {
+    width: 100%;
+  }
+
+  100% {
+    width: 0%;
+  }
+}

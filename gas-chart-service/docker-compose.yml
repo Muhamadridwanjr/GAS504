@@ -1,0 +1,42 @@
+services:
+  gas-chart-service:
+    build: .
+    container_name: gas-chart-service
+    restart: unless-stopped
+    ports:
+      - "9700:9700"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:pass@gas-chart-service-postgres:5432/gas_chart
+    depends_on:
+      gas-chart-service-postgres:
+        condition: service_started
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9700/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  gas-chart-service-postgres:
+    image: postgres:15-alpine
+    container_name: gas-chart-service-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: gas_chart
+    volumes:
+      - pg_gas_chart_service_data:/var/lib/postgresql/data
+    networks:
+      - gas-network
+
+networks:
+  gas-network:
+    external: true
+    name: gas-network
+
+volumes:
+  pg_gas_chart_service_data:

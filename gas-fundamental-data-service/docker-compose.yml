@@ -1,0 +1,42 @@
+services:
+  gas-fundamental-data-service:
+    build: .
+    container_name: gas-fundamental-data-service
+    restart: unless-stopped
+    ports:
+      - "9603:9603"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:pass@gas-fundamental-data-service-postgres:5432/gas_fundamental
+    depends_on:
+      gas-fundamental-data-service-postgres:
+        condition: service_started
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9603/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  gas-fundamental-data-service-postgres:
+    image: postgres:15-alpine
+    container_name: gas-fundamental-data-service-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: gas_fundamental
+    volumes:
+      - pg_gas_fundamental_data_service_data:/var/lib/postgresql/data
+    networks:
+      - gas-network
+
+networks:
+  gas-network:
+    external: true
+    name: gas-network
+
+volumes:
+  pg_gas_fundamental_data_service_data:

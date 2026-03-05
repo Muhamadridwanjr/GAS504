@@ -1,0 +1,63 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # GAS Gateway (main entry point)
+  - job_name: gas-gateway
+    static_configs:
+      - targets: ["gas-gateway-api:8000"]
+    metrics_path: /metrics
+
+  # GAS Core Services
+  - job_name: gas-core
+    static_configs:
+      - targets:
+          - "gas-signal-service:8106"
+          - "gas-journal-service:8107"
+          - "gas-alert-engine:8400"
+          - "gas-engine-orchestrator:8105"
+
+  # GAS AI Services
+  - job_name: gas-ai
+    static_configs:
+      - targets:
+          - "gas-ai-orchestrator:9003"
+          - "gas-rag-technical:9001"
+          - "gas-vector-db:9004"
+
+  # GAS Data & Analysis Services
+  - job_name: gas-data-analysis
+    static_configs:
+      - targets:
+          - "gas-screener-service:9600"
+          - "gas-calendar-news-service:9601"
+          - "gas-tradingplan-service:9602"
+          - "gas-fundamental-data-service:9603"
+          - "gas-data-ingestor:9604"
+          - "gas-chart-service:9700"
+
+  # GAS Quant Layer
+  - job_name: gas-quant
+    static_configs:
+      - targets:
+          - "gas-quant-orch:9500"
+          - "gas-pattern-detector:9501"
+          - "gas-statarb-engine:9502"
+          - "gas-regime-detector:9503"
+          - "gas-quant-backtester:9504"
+
+  # GAS Edge / Legendary Layer
+  - job_name: gas-edge
+    static_configs:
+      - targets:
+          - "gas-market-phase:9510"
+          - "gas-risk-engine:9511"
+          - "gas-correlation:9512"
+          - "gas-trend-engine:9513"
+          - "gas-orderflow:9514"

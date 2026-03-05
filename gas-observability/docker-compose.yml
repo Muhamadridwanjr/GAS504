@@ -1,0 +1,141 @@
+services:
+  # ── Log Aggregation ────────────────────────────────────────────────────
+  gas-loki:
+    image: grafana/loki:2.9.10
+    container_name: gas-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/tmp/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Log Shipper (reads Docker container logs) ──────────────────────────
+  gas-promtail:
+    image: grafana/promtail:2.9.10
+    container_name: gas-promtail
+    restart: unless-stopped
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      gas-loki:
+        condition: service_started
+    networks:
+      - gas-network
+
+  # ── Metrics ───────────────────────────────────────────────────────────
+  gas-prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: gas-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Dashboard ─────────────────────────────────────────────────────────
+  gas-grafana:
+    image: grafana/grafana:11.4.0
+    container_name: gas-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: gas_admin_2026
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_DOMAIN: localhost
+      GF_SERVER_ROOT_URL: http://localhost:3000
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      gas-loki:
+        condition: service_started
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Object Storage (MinIO for gas-data-ingestor) ──────────────────────
+  gas-minio:
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
+    container_name: gas-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9010:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 20s
+
+  # ── MinIO bucket initializer (one-shot) ───────────────────────────────
+  gas-minio-init:
+    image: minio/mc:RELEASE.2024-11-17T19-35-25Z
+    container_name: gas-minio-init
+    depends_on:
+      gas-minio:
+        condition: service_started
+    networks:
+      - gas-network
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set local http://gas-minio:9000 minioadmin minioadmin;
+      mc mb --ignore-existing local/gas-data;
+      mc mb --ignore-existing local/gas-parquet;
+      mc mb --ignore-existing local/gas-models;
+      echo 'Buckets initialized';
+      "
+
+networks:
+  gas-network:
+    external: true
+    name: gas-network
+
+volumes:
+  loki_data:
+  prometheus_data:
+  grafana_data:
+  minio_data:
+    external: true
+    name: gas-data-ingestor_minio_data

@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  gas-terminal-backend:
+    build: .
+    container_name: gas-terminal-backend
+    ports:
+      - "8085:8085"
+    env_file:
+      - .env
+    networks:
+      - gas-network
+      - gas_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  gas-network:
+    external: true
+  gas_network:
+    external: true
