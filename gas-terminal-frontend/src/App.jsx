@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Zap, BarChart2, Star, Briefcase, Settings,
-  Moon, Sun, Monitor, Bell, Search, LayoutGrid, Calendar
+  Moon, Sun, Monitor, Bell, Search, LayoutGrid, Calendar,
+  Menu, ChevronLeft, LogOut, Crown, Users, Activity
 } from 'lucide-react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import LandingPage from './components/LandingPage';
+import LoginPage from './components/LoginPage';
+import SignupPage from './components/SignupPage';
+import AuthCallback from './components/AuthCallback';
 
 import { PAIRS, GLOBAL_INDICES, MACRO_DATA, AI_ANALYSIS, NEWS_FEED } from './constants';
-import { fetchOverview } from './services/api';
+import { fetchOverview, fetchLatestSignal } from './services/api';
 import { useWebSocket } from './hooks/useWebSocket';
 
 import LoadingScreen from './components/LoadingScreen';
@@ -17,8 +23,14 @@ import SettingsView from './components/SettingsView';
 import AICommandCenter from './components/AICommandCenter';
 import MarketsView from './components/MarketsView';
 import SignalView from './components/SignalView';
+import PricingView from './components/PricingView';
+import ProfileView from './components/ProfileView';
+import FundamentalView from './components/FundamentalView';
+import AIBloombergTerminal from './components/AIBloombergTerminal';
+import TerminalFooter from './components/TerminalFooter';
 
-export default function App() {
+function Terminal() {
+  const { user, logout } = useAuth();
   const [activeMenu, setActiveMenu] = useState('signal');
   const [theme, setTheme] = useState(() => localStorage.getItem('gas-theme') || 'dark');
   const [activePair, setActivePair] = useState('XAUUSD');
@@ -29,11 +41,24 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [eta, setEta] = useState(15);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [chartPair, setChartPair] = useState(PAIRS[0]);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = React.useRef(null);
+
+  // Close profile menu on outside click
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const [news, setNews] = useState(NEWS_FEED);
-  const [globalIndices, setGlobalIndices] = useState(GLOBAL_INDICES);
   const [macroData, setMacroData] = useState(MACRO_DATA);
   const [aiAnalysis, setAiAnalysis] = useState(AI_ANALYSIS);
 
@@ -95,7 +120,6 @@ export default function App() {
 
           if (overview.signal) setCurrentSignal(overview.signal);
           if (overview.news) setNews(overview.news.map(n => n.title || n)); // format handling
-          if (overview.indices) setGlobalIndices(overview.indices);
           if (overview.macro) setMacroData(overview.macro);
           if (overview.ai) setAiAnalysis(overview.ai);
 
@@ -141,19 +165,45 @@ export default function App() {
     return e.length < 12 && e.length > 0 ? [...e, ...e, ...e] : e;
   }, [prices]);
 
-  const handleSelectPair = (symbol) => {
+  const handleSelectPair = async (symbol) => {
     if (navigator.vibrate) navigator.vibrate(30);
     const pair = pairs.find(p => p.symbol === symbol);
     setActivePair(symbol);
     if (pair) setChartPair(pair);
+
+    // Subscribe to new symbol
+    if (isConnected) {
+      send({ command: 'subscribe', symbol });
+    }
+
+    // Fetch latest signal for the selected pair
+    try {
+      const signalData = await fetchLatestSignal(symbol);
+      if (signalData && signalData.signal) {
+        setCurrentSignal(signalData.signal);
+      }
+    } catch (err) {
+      console.error(`Failed to fetch signal for ${symbol}`, err);
+    }
+
     setActiveMenu('signal');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Initial subscription for all pairs
+  useEffect(() => {
+    if (isConnected && pairs.length > 0) {
+      console.log(`Subscribing to ${pairs.length} pairs`);
+      pairs.forEach(p => {
+        send({ command: 'subscribe', symbol: p.symbol });
+      });
+    }
+  }, [isConnected, pairs]);
+
   if (isLoading) return <LoadingScreen />;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] font-sans overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] font-sans overflow-x-hidden">
       {/* TOP TICKER */}
       <div className="h-8 bg-[var(--bg-card)] border-b border-[var(--border-color)] flex items-center overflow-hidden relative z-50">
         <div className="shrink-0 px-3 border-r border-[var(--border-color)] flex items-center gap-2 h-full">
@@ -189,36 +239,58 @@ export default function App() {
       </div>
 
       {/* LAYOUT */}
-      <div className="flex h-[calc(100vh-32px)]">
+      <div className="flex h-[calc(100vh-32px-24px)]">
 
         {/* SIDEBAR */}
-        <aside className="w-14 md:w-[60px] xl:w-[220px] bg-[var(--bg-card)] border-r border-[var(--border-color)] flex flex-col shrink-0 z-40">
-          <div className="h-14 flex items-center justify-center xl:justify-start xl:px-5 border-b border-[var(--border-color)]">
-            <div className="xl:hidden w-8 h-8 rounded-lg bg-[var(--accent-soft)] flex items-center justify-center">
-              <Zap size={16} className="text-[var(--accent)] fill-[var(--accent)] pulse-dot" />
+        <aside className={`${isSidebarCollapsed ? 'w-14' : 'w-14 md:w-[60px] xl:w-[220px]'} bg-[var(--bg-card)] border-r border-[var(--border-color)] flex flex-col shrink-0 z-40 transition-all duration-300`}>
+          <div className="h-14 flex items-center justify-between px-3 xl:px-5 border-b border-[var(--border-color)]">
+            <div className={`flex items-center gap-2 ${isSidebarCollapsed ? 'justify-center w-full' : ''}`}>
+              <div className="w-8 h-8 rounded-lg bg-[var(--accent-soft)] flex items-center justify-center shrink-0">
+                <Zap size={16} className="text-[var(--accent)] fill-[var(--accent)] pulse-dot" />
+              </div>
+              {!isSidebarCollapsed && <span className="hidden xl:block text-sm font-black tracking-tight font-display">GOLDEN <span className="text-[var(--accent)]">AI</span></span>}
             </div>
-            <span className="hidden xl:block text-sm font-black tracking-tight font-display">GOLDEN <span className="text-[var(--accent)]">AI</span></span>
+            {!isSidebarCollapsed && (
+              <button onClick={() => setIsSidebarCollapsed(true)} className="hidden xl:flex text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors">
+                <ChevronLeft size={16} />
+              </button>
+            )}
+            {isSidebarCollapsed && (
+              <button onClick={() => setIsSidebarCollapsed(false)} className="hidden xl:flex text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors absolute -right-3 top-16 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-full p-1 z-50">
+                <Menu size={12} />
+              </button>
+            )}
           </div>
           <nav className="flex-1 py-4 flex flex-col gap-1 overflow-y-auto scrollbar-none px-2">
             {[
-              { id: 'signal', icon: Zap, label: 'Sinyal AI' },
-              { id: 'markets', icon: BarChart2, label: 'Pasar' },
+              { id: 'signal', icon: Zap, label: 'Signal AI' },
+              { id: 'markets', icon: BarChart2, label: 'Market' },
+              { id: 'fundamental', icon: Activity, label: 'Macro' },
               { id: 'watchlist', icon: Star, label: 'Favorit' },
               { id: 'portfolio', icon: Briefcase, label: 'Portofolio' },
+              { id: 'pricing', icon: Crown, label: 'Pricing' },
+              { id: 'profile', icon: Users, label: 'Profil' },
             ].map(item => (
-              <SideBtn key={item.id} {...item} active={activeMenu === item.id} onClick={setActiveMenu} />
+              <SideBtn key={item.id} {...item} active={activeMenu === item.id} onClick={setActiveMenu} collapsed={isSidebarCollapsed} />
             ))}
             <div className="mx-2 my-3 border-t border-[var(--border-color)]" />
-            <SideBtn id="more" icon={LayoutGrid} label="Alat Pro" active={activeMenu === 'more'} onClick={setActiveMenu} />
-            <SideBtn id="alerts" icon={Bell} label="Alerts" active={activeMenu === 'alerts'} onClick={setActiveMenu} />
-            <SideBtn id="calendars" icon={Calendar} label="Kalender" active={activeMenu === 'calendars'} onClick={setActiveMenu} />
+            <SideBtn id="more" icon={LayoutGrid} label="Alat Pro" active={activeMenu === 'more'} onClick={setActiveMenu} collapsed={isSidebarCollapsed} />
+            <SideBtn id="alerts" icon={Bell} label="Alerts" active={activeMenu === 'alerts'} onClick={setActiveMenu} collapsed={isSidebarCollapsed} />
+            <SideBtn id="calendars" icon={Calendar} label="Kalender" active={activeMenu === 'calendars'} onClick={setActiveMenu} collapsed={isSidebarCollapsed} />
             <div className="flex-1" />
-            <SideBtn id="settings" icon={Settings} label="Pengaturan" active={activeMenu === 'settings'} onClick={setActiveMenu} />
+            <SideBtn id="settings" icon={Settings} label="Pengaturan" active={activeMenu === 'settings'} onClick={setActiveMenu} collapsed={isSidebarCollapsed} />
           </nav>
         </aside>
 
+        {/* LEFT PANEL (xl only) - AI TERMINAL HOME */}
+        <aside className="hidden xl:flex w-[420px] bg-[var(--bg-card)] border-r border-[var(--border-color)] flex-col shrink-0 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0">
+            <AIBloombergTerminal isFullHeight={true} />
+          </div>
+        </aside>
+
         {/* MAIN */}
-        <main className="flex-1 flex flex-col overflow-hidden relative">
+        <main className="flex-1 flex flex-col overflow-hidden relative min-w-0">
           {/* HEADER BAR */}
           <header className="h-14 bg-[var(--bg-card)] border-b border-[var(--border-color)] flex items-center px-4 gap-4 shrink-0 z-30">
             <div className="flex items-center gap-2 bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-md px-3 py-2 w-48 md:w-64 transition-all focus-within:border-[var(--text-dim)]">
@@ -255,8 +327,46 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 to-yellow-600 p-[1px] cursor-pointer shadow-[0_0_10px_rgba(250,204,21,0.2)]">
-                <div className="w-full h-full bg-[var(--bg-main)] rounded-full flex items-center justify-center text-[10px] font-black text-[var(--text-primary)]">JD</div>
+              {/* Profile Dropdown */}
+              <div className="relative" ref={profileMenuRef}>
+                <button onClick={() => setShowProfileMenu(p => !p)}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-yellow-400 to-yellow-600 p-[1px] shadow-[0_0_10px_rgba(250,204,21,0.2)]">
+                    {user?.avatar_url
+                      ? <img src={user.avatar_url} alt="avatar" className="w-full h-full rounded-full object-cover" />
+                      : <div className="w-full h-full bg-[var(--bg-main)] rounded-full flex items-center justify-center text-[10px] font-black text-[var(--text-primary)]">
+                        {user?.full_name ? user.full_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2) : user?.email?.slice(0, 2).toUpperCase() || 'GA'}
+                      </div>
+                    }
+                  </div>
+                  <span className="hidden sm:block text-xs font-bold text-[var(--text-secondary)] max-w-[80px] truncate">{user?.username || user?.email?.split('@')[0]}</span>
+                </button>
+
+                {showProfileMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-52 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl z-[200] overflow-hidden">
+                    <div className="px-4 py-3 border-b border-[var(--border-color)] bg-[var(--bg-panel)]">
+                      <p className="text-xs font-black truncate">{user?.full_name || user?.username}</p>
+                      <p className="text-[10px] text-[var(--text-dim)] truncate">{user?.email}</p>
+                    </div>
+                    {[
+                      { icon: '👤', label: 'Profil Saya', action: () => { setActiveMenu('profile'); setShowProfileMenu(false); } },
+                      { icon: '💳', label: 'Plan & Usage', action: () => { setActiveMenu('profile'); setShowProfileMenu(false); } },
+                      { icon: '⚙️', label: 'Pengaturan', action: () => { setActiveMenu('settings'); setShowProfileMenu(false); } },
+                      { icon: '👑', label: 'Upgrade Plan', action: () => { setActiveMenu('pricing'); setShowProfileMenu(false); } },
+                    ].map((item, i) => (
+                      <button key={i} onClick={item.action}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
+                        <span>{item.icon}</span> {item.label}
+                      </button>
+                    ))}
+                    <div className="border-t border-[var(--border-color)]">
+                      <button onClick={logout}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-[var(--danger)] hover:bg-[var(--danger)]/5 transition-colors">
+                        <LogOut size={12} /> Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </header>
@@ -276,62 +386,26 @@ export default function App() {
           </div>
 
           {/* CONTENT AREA */}
-          <div className="flex-1 overflow-y-auto scrollbar-none relative">
+          <div className={`flex-1 ${activeMenu === 'markets' ? 'overflow-hidden' : 'overflow-y-auto'} scrollbar-none relative`}>
             {activeMenu === 'signal' && <SignalView signal={currentSignal} isNew={isNewSignal} timer={eta} chartPair={chartPair} prices={prices} onSelect={handleSelectPair} activePair={activePair} pairs={pairs} macroData={macroData} aiAnalysis={aiAnalysis} theme={theme} />}
-            {activeMenu === 'markets' && <MarketsView pairs={pairs} prices={prices} directions={priceDirections} onSelect={handleSelectPair} activePair={activePair} />}
+            {activeMenu === 'markets' && <MarketsView pairs={pairs} prices={prices} directions={priceDirections} onSelect={handleSelectPair} activePair={activePair} theme={theme} chartPair={chartPair} />}
             {activeMenu === 'watchlist' && <EmptyView icon={<Star size={32} />} label="Favorit Kosong" sub="Tambahkan aset ke daftar favorit Anda" />}
-            {activeMenu === 'portfolio' && <PortfolioView />}
+            {activeMenu === 'fundamental' && <FundamentalView />}
+            {activeMenu === 'portfolio' && <PortfolioView theme={theme} />}
+            {activeMenu === 'pricing' && <PricingView />}
+            {activeMenu === 'profile' && <ProfileView />}
             {activeMenu === 'more' && <AICommandCenter onSelect={id => setActiveMenu(id === 'ai_signal' ? 'signal' : id)} />}
             {activeMenu === 'settings' && <SettingsView />}
             {activeMenu === 'alerts' && <EmptyView icon={<Bell size={32} />} label="Belum Ada Alert" sub="Buat alert harga baru dari halaman Markets" />}
             {activeMenu === 'calendars' && <CalendarView />}
           </div>
         </main>
-
-        {/* RIGHT PANEL (xl only) */}
-        <aside className="hidden xl:flex w-[320px] bg-[var(--bg-card)] border-l border-[var(--border-color)] flex-col shrink-0 overflow-y-auto scrollbar-none">
-          <div className="p-5 border-b border-[#1c1d24]">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-dim)]">Inteligensi AI</span>
-              <div className="w-2 h-2 rounded-full bg-[var(--success)] pulse-dot" />
-            </div>
-            <p className={`text-3xl font-display font-black mb-4 ${aiAnalysis?.trend === 'BULLISH' ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>{aiAnalysis?.trend || 'ANALYZING...'}</p>
-            <div className="space-y-2">
-              {aiAnalysis?.logic && aiAnalysis.logic.map((l, i) => (
-                <div key={i} className="flex items-start gap-3 text-[11px] p-3 rounded bg-[#13141a] border border-[#1c1d24]">
-                  <Zap size={12} className="text-yellow-400 shrink-0 mt-0.5" />
-                  <span className="text-[#aaa] leading-relaxed">{l}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="p-5 border-b border-[#1c1d24]">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#555] mb-4 block">Fundamental Makro</span>
-            {macroData.map((m, i) => (
-              <div key={i} className="flex justify-between items-center py-2.5 border-b border-[#1c1d24] last:border-0 text-[11px]">
-                <span className="text-[#777] font-bold">{m.title}</span>
-                <div className="text-right">
-                  <span className="font-mono font-bold text-[#eee] mr-3">{m.value}</span>
-                  <span className={`text-[9px] font-black ${m.impact === 'HIGH' ? 'text-red-400' : 'text-yellow-400'}`}>{m.bias}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="p-5">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#555] mb-4 block">Indeks Global</span>
-            {globalIndices.map((g, i) => (
-              <div key={i} className="flex justify-between items-center py-2 text-[11px]">
-                <span className="text-[#777] font-bold w-24 truncate">{g.name}</span>
-                <span className="font-mono font-bold text-[#ccc]">{g.value.toLocaleString()}</span>
-                <span className={`font-mono font-bold w-16 text-right ${g.pct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{g.pct >= 0 ? '+' : ''}{(g.pct || 0).toFixed(2)}%</span>
-              </div>
-            ))}
-          </div>
-        </aside>
       </div>
 
+      <TerminalFooter isConnected={isConnected} />
+
       {/* MOBILE BOTTOM NAV */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0d0e12] border-t border-[#1c1d24] flex items-center justify-around z-50 px-2 pb-1">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[var(--bg-card)] border-t border-[var(--border-color)] flex items-center justify-around z-50 px-2 pb-1">
         {[
           { id: 'signal', icon: <Zap size={22} />, label: 'Sinyal' },
           { id: 'markets', icon: <BarChart2 size={22} />, label: 'Pasar' },
@@ -348,20 +422,41 @@ export default function App() {
       </nav>
 
       {/* FLOATING ALERT PRO */}
-      {showAlert && (
-        <div className="fixed top-14 right-4 z-[300] slide-in">
-          <div className="bg-[#0d0e12] border border-yellow-400/30 rounded-xl p-4 flex items-center gap-4 shadow-2xl min-w-[260px] overflow-hidden">
-            <div className="w-10 h-10 rounded-lg bg-yellow-400/10 flex items-center justify-center shrink-0">
-              <Zap size={20} className="text-yellow-400 fill-yellow-400 pulse-dot" />
+      {
+        showAlert && (
+          <div className="fixed top-14 right-4 z-[300] slide-in">
+            <div className="bg-[var(--bg-card)] border border-[var(--accent)]/30 rounded-xl p-4 flex items-center gap-4 shadow-2xl min-w-[260px] overflow-hidden">
+              <div className="w-10 h-10 rounded-lg bg-yellow-400/10 flex items-center justify-center shrink-0">
+                <Zap size={20} className="text-yellow-400 fill-yellow-400 pulse-dot" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-yellow-400 font-black uppercase tracking-widest mb-0.5">Sinyal {currentSignal?.level}</p>
+                <p className="text-sm font-bold text-white truncate">{currentSignal?.pair} · {currentSignal?.type}</p>
+              </div>
+              <div className="absolute bottom-0 left-0 h-[2px] bg-yellow-400 alert-bar" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-yellow-400 font-black uppercase tracking-widest mb-0.5">Sinyal {currentSignal?.level}</p>
-              <p className="text-sm font-bold text-white truncate">{currentSignal?.pair} · {currentSignal?.type}</p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-[2px] bg-yellow-400 alert-bar" />
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
+  );
+}
+
+function AuthGate() {
+  const { user, loading } = useAuth();
+  const path = window.location.pathname;
+  if (loading) return null;
+  if (path === '/auth/callback') return <AuthCallback />;
+  if (user) return <Terminal />;
+  if (path === '/login') return <LoginPage />;
+  if (path === '/signup') return <SignupPage />;
+  return <LandingPage />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
   );
 }

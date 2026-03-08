@@ -9,6 +9,8 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:pass@gas-fundamental-data-service-postgres:5432/gas_fundamental
+      - REDIS_URL=redis://gas-redis:6379
+      - TEDATA_DISABLE_LOGGING=true
     depends_on:
       gas-fundamental-data-service-postgres:
         condition: service_started

@@ -1,5 +1,6 @@
 """
 GET /terminal/calendar – Economic calendar events.
+Proxies to gas-calendar-news-service with proper params.
 """
 from fastapi import APIRouter, Query
 from typing import Optional
@@ -8,31 +9,34 @@ from src.services.client import fetch_json
 
 router = APIRouter()
 
-FALLBACK_EVENTS = [
-    {"date": "Mar 6", "name": "ADP Non-Farm Employment", "impact": "HIGH", "time": "13:15"},
-    {"date": "Mar 7", "name": "US Unemployment Claims", "impact": "MEDIUM", "time": "13:30"},
-    {"date": "Mar 8", "name": "Non-Farm Payrolls", "impact": "HIGH", "time": "13:30"},
-    {"date": "Mar 12", "name": "CPI Month over Month", "impact": "HIGH", "time": "13:30"},
-    {"date": "Mar 19", "name": "FOMC Statement", "impact": "HIGH", "time": "18:00"},
-]
-
 
 @router.get("/terminal/calendar")
 async def get_calendar(
     from_date: Optional[str] = Query(None),
     to_date: Optional[str] = Query(None),
-    impact: Optional[str] = Query(None),
+    importance: Optional[str] = Query(None),
+    country: Optional[str] = Query(None),
+    limit: int = Query(200),
 ):
-    """Get economic calendar events."""
-    params = {}
+    """Proxy calendar events from gas-calendar-news-service."""
+    params = {"limit": limit}
     if from_date:
-        params["from"] = from_date
+        params["from_date"] = from_date
     if to_date:
-        params["to"] = to_date
-    if impact:
-        params["impact"] = impact
+        params["to_date"] = to_date
+    if importance:
+        params["importance"] = importance
+    if country:
+        params["country"] = country
 
-    data = await fetch_json(f"{settings.CALENDAR_NEWS_URL}/calendar/events", params=params or None)
-    if "error" in data or not isinstance(data, list):
-        return {"status": "ok", "events": FALLBACK_EVENTS}
-    return {"status": "ok", "events": data}
+    headers = {"X-Internal-Key": "gas-internal-secret-key"}
+    data = await fetch_json(
+        f"{settings.CALENDAR_NEWS_URL}/calendar",
+        params=params,
+        headers=headers,
+    )
+    if isinstance(data, dict) and "data" in data:
+        return data
+    if isinstance(data, dict) and "error" in data:
+        return {"total": 0, "data": []}
+    return {"total": 0, "data": []}

@@ -43,7 +43,7 @@ async def get_summary(from_date: str = Query(...), to_date: str = Query(...), db
     return SummaryResponse(summary=generate_event_summary(data), event_count=len(data))
 
 @router.post("/ingest/run", status_code=202)
-async def trigger_ingest():
+async def trigger_ingest(start_date: str | None = None, end_date: str | None = None, db: AsyncSession = Depends(get_db)):
     from src.ingestion.ecocal_worker import fetch_calendar_events
-    events = await fetch_calendar_events()
-    return {"status": "triggered", "events_fetched": len(events)}
+    events = await fetch_calendar_events(db, start_date=start_date, end_date=end_date)
+    return {"status": "triggered", "events_fetched": len(events), "period": {"start": start_date, "end": end_date}}

@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment
+# .env files are tracked intentionally
+.env.local
+.env.production
+
+# Large media files
+*.mp4
+*.mov
+*.avi
+
+# Build/Dist
+dist/
+build/
+*.egg-info/
+.next/
+out/
+
+# Logs
+*.log
+frontend.log
+frontend-new.log
+frontend-final.log
+nohup.out
+
+# Docker
+.docker-temp/
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Temporary files
+/tmp/
+.gemini/
+.agents/
+.agent/
+_agents/
+_agent/
+brain/
+walkthrough-backups/

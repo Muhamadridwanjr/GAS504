@@ -13,8 +13,8 @@ class MT5DataClient:
                        to_ts: int | None = None, count: int | None = None) -> list[dict]:
         url = f"{self.base_url}/history"
         params = {"symbol": symbol, "timeframe": timeframe}
-        if from_ts: params["from"] = from_ts
-        if to_ts: params["to"] = to_ts
+        if from_ts: params["from_time"] = from_ts
+        if to_ts: params["to_time"] = to_ts
         if count: params["count"] = count
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:

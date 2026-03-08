@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException, Header, Request
+from fastapi import APIRouter, Depends, HTTPException, Header, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.database import get_db
 from src.db.repositories.template_repo import TemplateRepo
@@ -16,6 +16,14 @@ def get_user_id(x_user_id: str = Header(...)) -> str: return x_user_id
 async def get_chart_data(req: ChartDataRequest, request: Request):
     orch = request.app.state.orchestrator
     return await orch.get_chart_data(req.symbol, req.timeframe, req.from_ts, req.to_ts, req.count, req.indicators, req.include_smc)
+
+@router.get("/chart/render/{symbol}")
+async def render_chart(symbol: str, timeframe: str = "M15", count: int = 100, request: Request = None):
+    orch = request.app.state.orchestrator
+    img_data = await orch.render_chart_image(symbol, timeframe, count)
+    if not img_data:
+        raise HTTPException(404, "Chart data not available")
+    return Response(content=img_data, media_type="image/png")
 
 @router.get("/chart/templates")
 async def list_templates(user_id: str = Depends(get_user_id), db: AsyncSession = Depends(get_db)):

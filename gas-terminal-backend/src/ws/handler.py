@@ -51,8 +51,7 @@ async def _redis_price_feed(websocket: WebSocket, symbols: set):
                 # logger.debug("redis_data_raw", data=msg_data[:100])
                 try:
                     data = json.loads(msg_data)
-                    symbol = data.get("symbol", "").strip()
-                    logger.info("tick_received", symbol=symbol, symbols_monitored=list(symbols))
+                    symbol = data.get("symbol", "").strip().upper()
                     
                     if not symbols or symbol in symbols or any(s in symbol for s in symbols):
                         ticks = data.get("ticks", [])
@@ -61,6 +60,9 @@ async def _redis_price_feed(websocket: WebSocket, symbols: set):
                             tick = ticks[-1]
                             # Try multiple possible price fields
                             price = tick.get("ask", tick.get("last", tick.get("bid", 0)))
+                            
+                            logger.info("tick_broadcast", symbol=symbol, price=price, clients_count=len(manager.active_connections))
+                            
                             if not price: continue
                             
                             ts = tick.get("time_msc", tick.get("time", 0))
@@ -70,11 +72,21 @@ async def _redis_price_feed(websocket: WebSocket, symbols: set):
                             await websocket.send_json({
                                 "type": "price",
                                 "symbol": symbol,
-                                "price": price,
+                                "price": float(price),
                                 "timestamp": ts,
                             })
-                except json.JSONDecodeError:
-                    pass
+                        else:
+                            # If no 'ticks' key, maybe it's a flat structure
+                            price = data.get("price", data.get("ask", data.get("last", 0)))
+                            if price:
+                                await websocket.send_json({
+                                    "type": "price",
+                                    "symbol": symbol,
+                                    "price": float(price),
+                                    "timestamp": data.get("time", 0),
+                                })
+                except (json.JSONDecodeError, ValueError) as e:
+                    logger.error("parse_error", error=str(e), data=msg_data[:100])
     except (WebSocketDisconnect, ConnectionError, Exception) as e:
         logger.error(f"Redis feed connection error: {e}")
     finally:

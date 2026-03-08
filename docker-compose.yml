@@ -1,0 +1,311 @@
+version: "3.8"
+
+# ============================================================
+# GAS – Golden AI Strategy | Master Docker Compose
+# ============================================================
+# Starts the full GAS ecosystem needed for the EA + Terminal.
+# EA (GASSTRATEGYEAPRO v4.0) connects to gateway at port 8000.
+#
+# Quick start:
+#   docker network create gas-network
+#   docker-compose up -d
+# ============================================================
+
+x-common: &common
+  restart: unless-stopped
+  networks:
+    - gas-network
+
+x-healthcheck: &hc-curl
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 15s
+
+services:
+
+  # ────────────────────────────────────────────────────────
+  # INFRASTRUCTURE
+  # ────────────────────────────────────────────────────────
+  gas-redis:
+    image: redis:7-alpine
+    container_name: gas-redis
+    <<: *common
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  gas-user-db:
+    image: postgres:15-alpine
+    container_name: gas-user-db
+    <<: *common
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gas_signals
+    volumes:
+      - gas-pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ────────────────────────────────────────────────────────
+  # AUTH SERVICE (login, Google OAuth – port 8001)
+  # ────────────────────────────────────────────────────────
+  gas-auth-service:
+    build: ./gas-auth-service
+    container_name: gas-auth-service
+    <<: *common
+    ports:
+      - "8001:8001"
+    env_file: ./gas-auth-service/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_user_db
+    depends_on:
+      gas-user-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/v1/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 1: GATEWAY (EA connects here – port 8000)
+  # ────────────────────────────────────────────────────────
+  gas-gateway-api:
+    build: ./gas-gateway-api
+    container_name: gas-gateway-api
+    <<: *common
+    ports:
+      - "8000:8000"
+    env_file: ./gas-gateway-api/.env
+    environment:
+      REDIS_HOST: gas-redis
+      TERMINAL_BACKEND_URL: http://gas-terminal-backend:8085
+      MT5_WEBSOCKET_URL: http://gas-mt5-websocket:8110
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 2: TERMINAL BACKEND (aggregator for frontend + EA)
+  # ────────────────────────────────────────────────────────
+  gas-terminal-backend:
+    build: ./gas-terminal-backend
+    container_name: gas-terminal-backend
+    <<: *common
+    ports:
+      - "8085:8085"
+    env_file: ./gas-terminal-backend/.env
+    environment:
+      REDIS_HOST: gas-redis
+      REDIS_PORT: 6379
+      SIGNAL_SERVICE_URL: http://gas-signal-service:8106
+      QUANT_ORCH_URL: http://gas-quant-orch:9500
+      JOURNAL_URL: http://gas-journal-service:8107
+      REALTIME_HUB_URL: http://gas-realtime-hub:8111
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 3: MT5 DATA BRIDGE (EA tick/OHLC/heartbeat)
+  # ────────────────────────────────────────────────────────
+  gas-mt5-websocket:
+    build: ./gas-mt5-websocket
+    container_name: gas-mt5-websocket
+    <<: *common
+    ports:
+      - "8110:8110"
+    environment:
+      REDIS_URL: redis://gas-redis:6379/0
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8110/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 4: REALTIME HUB (WebSocket broadcast to frontend)
+  # ────────────────────────────────────────────────────────
+  gas-realtime-hub:
+    build: ./gas-realtime-hub
+    container_name: gas-realtime-hub
+    <<: *common
+    ports:
+      - "8111:8111"
+    environment:
+      REDIS_URL: redis://gas-redis:6379/0
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8111/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 5: SIGNAL SERVICE (stores + publishes signals)
+  # ────────────────────────────────────────────────────────
+  gas-signal-service:
+    build: ./gas-signal-service
+    container_name: gas-signal-service
+    <<: *common
+    ports:
+      - "8106:8106"
+    env_file: ./gas-signal-service/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_signals
+      REDIS_URL: redis://gas-redis:6379/0
+      BILLING_SERVICE_URL: http://gas-billing-service:8004
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+      gas-user-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8106/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 6: QUANT ORCHESTRATOR (AI signal brain – port 9500)
+  # ────────────────────────────────────────────────────────
+  gas-quant-orch:
+    build: ./gas-quant-orch
+    container_name: gas-quant-orch
+    <<: *common
+    ports:
+      - "9500:9500"
+    env_file: ./gas-quant-orch/.env
+    environment:
+      REDIS_URL: redis://gas-redis:6379/0
+      REGIME_DETECTOR_URL: http://gas-regime-detector:9503
+      PATTERN_DETECTOR_URL: http://gas-pattern-detector:9501
+      STATARB_ENGINE_URL: http://gas-statarb-engine:9502
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9500/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 7: JOURNAL SERVICE (trade journal from EA)
+  # ────────────────────────────────────────────────────────
+  gas-journal-service:
+    build: ./gas-journal-service
+    container_name: gas-journal-service
+    <<: *common
+    ports:
+      - "8107:8107"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_signals
+      REDIS_URL: redis://gas-redis:6379/0
+      INTERNAL_API_KEY: gas-internal-secret-key
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+      gas-user-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8107/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 8: TERMINAL SERVICE (order execution queue)
+  # ────────────────────────────────────────────────────────
+  gas-term-service:
+    build: ./gas-term-service
+    container_name: gas-term-service
+    <<: *common
+    ports:
+      - "8205:8205"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_signals
+      REDIS_URL: redis://gas-redis:6379/0
+      BILLING_SERVICE_URL: http://gas-billing-service:8004
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+      gas-user-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8205/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 9: CHART SERVICE (OHLC + indicators for frontend)
+  # ────────────────────────────────────────────────────────
+  gas-chart-service:
+    build: ./gas-chart-service
+    container_name: gas-chart-service
+    <<: *common
+    ports:
+      - "9700:9700"
+    environment:
+      REDIS_URL: redis://gas-redis:6379/0
+      MT5_DATA_SERVICE_URL: http://gas-mt5-data-service:8100
+      INDICATOR_ENGINE_URL: http://gas-indicator-engine:8203
+      SMC_ENGINE_URL: http://gas-smc-engine:8006
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9700/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 10: MT5 DATA SERVICE (historical OHLC)
+  # ────────────────────────────────────────────────────────
+  gas-mt5-data-service:
+    build: ./gas-mt5-data-service
+    container_name: gas-mt5-data-service
+    <<: *common
+    ports:
+      - "8100:8100"
+    environment:
+      REDIS_URL: redis://gas-redis:6379/0
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # FRONTEND (terminal.gasstrategy.io)
+  # ────────────────────────────────────────────────────────
+  gas-terminal-frontend:
+    build: ./gas-terminal-frontend
+    container_name: gas-terminal-frontend
+    <<: *common
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gas-gateway-api
+      - gas-terminal-backend
+      - gas-auth-service
+
+volumes:
+  gas-pgdata:
+    name: gas-pgdata
+
+networks:
+  gas-network:
+    name: gas-network
+    driver: bridge

@@ -18,6 +18,11 @@ from src.routes.news import router as news_router
 from src.routes.calendar import router as calendar_router
 from src.routes.chart import router as chart_router
 from src.routes.preferences import router as preferences_router
+from src.routes.terminal import router as terminal_router
+from src.routes.ai import router as ai_router
+from src.routes.gas import router as gas_router
+from src.routes.fundamental import router as fundamental_router
+from src.services.redis import redis_service
 
 structlog.configure(
     processors=[
@@ -28,11 +33,12 @@ structlog.configure(
 logger = structlog.get_logger(__name__)
 
 
-@asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown logic."""
     logger.info("starting", service=settings.APP_NAME, port=settings.PORT)
+    await redis_service.connect()
     yield
+    await redis_service.close()
     await close_client()
     logger.info("shutdown", service=settings.APP_NAME)
 
@@ -67,6 +73,10 @@ app.include_router(news_router)
 app.include_router(calendar_router)
 app.include_router(chart_router)
 app.include_router(preferences_router)
+app.include_router(terminal_router)
+app.include_router(ai_router)
+app.include_router(gas_router)
+app.include_router(fundamental_router)
 
 # ── WebSocket ───────────────────────────────────────────────────────
 app.websocket("/terminal/ws")(websocket_endpoint)

@@ -11,6 +11,7 @@ from src.cache.redis_cache import RedisCache
 from src.api.routes import router as fund_router
 from src.api.models import HealthResponse
 from src.lib.logger import get_logger, setup_logging
+from src.ingestion.scheduler import start_scheduler, stop_scheduler
 
 setup_logging()
 logger = get_logger(__name__)
@@ -22,8 +23,10 @@ async def lifespan(app: FastAPI):
     cache = RedisCache()
     await cache.connect()
     app.state.cache = cache
+    start_scheduler()
     logger.info("%s ready", settings.SERVICE_NAME)
     yield
+    stop_scheduler()
     await cache.close()
     logger.info("%s shutdown.", settings.SERVICE_NAME)
 

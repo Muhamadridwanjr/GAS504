@@ -1,13 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType, CandlestickSeries } from 'lightweight-charts';
+import { createChart, ColorType, CandlestickSeries, HistogramSeries, LineSeries } from 'lightweight-charts';
 import { fetchChartData } from '../services/api';
 
-export default function TradingViewChart({ pair, currentPrice, theme }) {
+export default function TradingViewChart({ pair, currentPrice, theme, timeframe = '15m' }) {
     const chartContainerRef = useRef(null);
     const chartRef = useRef(null);
     const seriesRef = useRef(null);
+    const volumeSeriesRef = useRef(null);
     const latestCandleRef = useRef(null);
     const [error, setError] = useState(null);
+
+    // Normalize timeframe for the API (e.g., '15m' -> 'M15', '1h' -> 'H1')
+    const getApiTimeframe = (tf) => {
+        const t = tf.toUpperCase();
+        if (t.endsWith('M') && t.length > 1) return 'M' + t.slice(0, -1);
+        if (t.endsWith('H') && t.length > 1) return 'H' + t.slice(0, -1);
+        if (t.endsWith('D') && t.length > 1) return 'D' + t.slice(0, -1);
+        return t;
+    };
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
@@ -15,17 +25,20 @@ export default function TradingViewChart({ pair, currentPrice, theme }) {
 
         const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
         const style = getComputedStyle(document.documentElement);
+        const borderCol = style.getPropertyValue('--border-color').trim() || '#1c1d24';
+        const textDimCol = style.getPropertyValue('--text-dim').trim() || '#aaaaaa';
         const colors = {
             bg: style.getPropertyValue('--bg-panel').trim() || '#0d0e12',
-            text: style.getPropertyValue('--text-dim').trim() || '#aaa',
-            grid: style.getPropertyValue('--border-color').trim() + '80', // Add transparency
-            border: style.getPropertyValue('--border-color').trim() || '#1c1d24',
-            watermark: style.getPropertyValue('--text-dim').trim() + '20',
+            text: textDimCol,
+            grid: borderCol.length >= 7 ? borderCol + '80' : borderCol, // Add transparency if hex
+            border: borderCol,
+            watermark: textDimCol.length >= 7 ? textDimCol + '20' : textDimCol,
         };
 
         try {
             // Initialize Chart
             chart = createChart(chartContainerRef.current, {
+                autoSize: true,
                 layout: {
                     background: { type: ColorType.Solid, color: colors.bg },
                     textColor: colors.text,
@@ -70,8 +83,23 @@ export default function TradingViewChart({ pair, currentPrice, theme }) {
                 wickDownColor: '#ef4444',
             });
 
+            const volumeSeries = chart.addSeries(HistogramSeries, {
+                color: '#26a69a',
+                priceFormat: {
+                    type: 'volume',
+                },
+                priceScaleId: '', // set as an overlay
+            });
+            chart.priceScale('').applyOptions({
+                scaleMargins: {
+                    top: 0.8, // highest point of the series will be at 80%
+                    bottom: 0,
+                },
+            });
+
             chartRef.current = chart;
             seriesRef.current = candlestickSeries;
+            volumeSeriesRef.current = volumeSeries;
 
             const handleResize = () => {
                 if (chartContainerRef.current && chart) {
@@ -87,17 +115,55 @@ export default function TradingViewChart({ pair, currentPrice, theme }) {
             // Fetch History
             const loadHistory = async () => {
                 try {
-                    const res = await fetchChartData(pair.symbol, 'M15', 100);
+                    const activeTf = getApiTimeframe(timeframe);
+                    // Request an EMA 20 indicator specifically
+                    const res = await fetchChartData(pair.symbol, activeTf, 100, [{ type: "EMA", period: 20 }]);
+
                     if (res && res.data && res.data.length > 0) {
                         const formattedData = res.data.map(d => ({
                             time: d.time,
                             open: d.open,
                             high: d.high,
                             low: d.low,
-                            close: d.close
+                            close: d.close,
+                            volume: d.volume || 0
                         })).sort((a, b) => a.time - b.time);
 
                         candlestickSeries.setData(formattedData);
+
+                        // Set volume data
+                        const volumeData = formattedData.map(d => ({
+                            time: d.time,
+                            value: d.volume,
+                            color: d.close >= d.open ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'
+                        }));
+                        volumeSeries.setData(volumeData);
+
+                        // Set EMA indicator if present
+                        if (res.indicators && res.indicators.results) {
+                            const emaResult = res.indicators.results.find(i => i.name === 'EMA' && i.period === 20);
+
+                            if (emaResult && emaResult.values) {
+                                const emaSeries = chart.addSeries(LineSeries, {
+                                    color: '#eab308', // Yellow
+                                    lineWidth: 2,
+                                    crosshairMarkerVisible: false,
+                                });
+
+                                const emaData = formattedData.map((d, i) => {
+                                    // The indicator results might have fewer values than OHLC if not enough data
+                                    const val = emaResult.values[i];
+                                    return (val !== null && val !== undefined && val !== 0 && !isNaN(val))
+                                        ? { time: d.time, value: val }
+                                        : null;
+                                }).filter(Boolean);
+
+                                if (emaData.length > 0) {
+                                    emaSeries.setData(emaData);
+                                }
+                            }
+                        }
+
                         if (formattedData.length > 0) {
                             latestCandleRef.current = formattedData[formattedData.length - 1];
                         }
@@ -118,7 +184,7 @@ export default function TradingViewChart({ pair, currentPrice, theme }) {
             console.error("Chart initialization crash", e);
             setError(e.message);
         }
-    }, [pair.symbol, theme]);
+    }, [pair.symbol, theme, timeframe]);
 
     // Handle real-time price updates
     useEffect(() => {
@@ -132,6 +198,16 @@ export default function TradingViewChart({ pair, currentPrice, theme }) {
                     low: Math.min(Number(currentObj.low), Number(currentPrice))
                 };
                 seriesRef.current.update(updatedCandle);
+
+                if (volumeSeriesRef.current) {
+                    const isUp = updatedCandle.close >= updatedCandle.open;
+                    volumeSeriesRef.current.update({
+                        time: updatedCandle.time,
+                        value: updatedCandle.volume || 0,
+                        color: isUp ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'
+                    });
+                }
+
                 latestCandleRef.current = updatedCandle;
             }
         } catch (e) {

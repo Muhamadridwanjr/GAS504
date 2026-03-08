@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # ── Redis ──────────────────────────────────────────────────────────
     REDIS_HOST: str = "gas-redis"
     REDIS_PORT: int = 6379
-    REDIS_DB: int = 1
+    REDIS_DB: int = 0
     CACHE_TTL_SECONDS: int = 30
 
     # ── Internal gateway key (for service-to-service) ─────────────────
@@ -23,6 +23,8 @@ class Settings(BaseSettings):
 
     # ── Upstream Service URLs ──────────────────────────────────────────
     SIGNAL_SERVICE_URL: str = "http://gas-signal-service:8106"
+    ENGINE_ORCHESTRATOR_URL: str = "http://gas-engine-orchestrator:8105"
+    AI_ORCHESTRATOR_URL: str = "http://gas-ai-orchestrator:9003"
     CALENDAR_NEWS_URL: str = "http://gas-calendar-news-service:9601"
     FUNDAMENTAL_DATA_URL: str = "http://gas-fundamental-data-service:9603"
     CHART_SERVICE_URL: str = "http://gas-chart-service:9700"
@@ -34,6 +36,8 @@ class Settings(BaseSettings):
     INDICATOR_ENGINE_URL: str = "http://gas-indicator-engine:8203"
     REALTIME_HUB_URL: str = "http://gas-realtime-hub:8111"
     SCREENER_URL: str = "http://gas-screener-service:9600"
+    QUANT_ORCH_URL: str = "http://gas-quant-orch:9500"
+    TERM_SERVICE_URL: str = "http://gas-term-service:8205"
 
     # ── CORS ───────────────────────────────────────────────────────────
     CORS_ORIGINS: str = "*"

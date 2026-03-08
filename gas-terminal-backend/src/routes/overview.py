@@ -11,18 +11,16 @@ router = APIRouter()
 
 # ── Fallback data (used when upstream services are unavailable) ─────
 FALLBACK_PAIRS = [
-    {"symbol": "XAUUSD", "name": "Gold / USD", "base": 2034.50, "vol": 0.8, "type": "Commodity",
-     "trend": [30, 45, 40, 60, 55, 75, 70, 65, 80, 75]},
-    {"symbol": "BTCUSD", "name": "Bitcoin / USD", "base": 64230.15, "vol": 25.0, "type": "Crypto",
-     "trend": [50, 40, 70, 60, 90, 80, 100, 85, 95, 90]},
-    {"symbol": "NVDA", "name": "NVIDIA Corp.", "base": 176.32, "vol": 1.5, "type": "Stock",
-     "trend": [60, 55, 65, 75, 70, 85, 90, 80, 88, 92]},
-    {"symbol": "EURUSD", "name": "Euro / USD", "base": 1.0854, "vol": 0.0006, "type": "Forex",
-     "trend": [20, 25, 22, 30, 28, 35, 32, 38, 30, 36]},
-    {"symbol": "TSLA", "name": "Tesla Inc.", "base": 247.10, "vol": 3.2, "type": "Stock",
-     "trend": [80, 70, 75, 65, 60, 70, 80, 75, 85, 78]},
-    {"symbol": "USDJPY", "name": "USD / Yen", "base": 149.85, "vol": 0.12, "type": "Forex",
-     "trend": [40, 50, 45, 55, 60, 58, 65, 62, 70, 67]},
+    {"symbol": "XAUUSD", "name": "Gold / USD", "base": 5089.872, "vol": 0.5, "type": "Commodity", "trend": [30, 45, 40, 60, 55, 75, 70, 65, 80, 75]},
+    {"symbol": "BTCUSD", "name": "Bitcoin / USD", "base": 68783.71, "vol": 50.0, "type": "Crypto", "trend": [50, 40, 70, 60, 90, 80, 100, 85, 95, 90]},
+    {"symbol": "EURUSD", "name": "Euro / USD", "base": 1.15554, "vol": 0.0001, "type": "Forex", "trend": [20, 25, 22, 30, 28, 35, 32, 38, 30, 36]},
+    {"symbol": "GBPUSD", "name": "Pound / USD", "base": 1.33359, "vol": 0.0001, "type": "Forex", "trend": [40, 45, 42, 50, 48, 55, 52, 58, 50, 56]},
+    {"symbol": "USDJPY", "name": "USD / Yen", "base": 157.880, "vol": 0.01, "type": "Forex", "trend": [40, 50, 45, 55, 60, 58, 65, 62, 70, 67]},
+    {"symbol": "ETHUSD", "name": "Ethereum / USD", "base": 2005.41, "vol": 2.0, "type": "Crypto", "trend": [70, 65, 75, 85, 80, 95, 100, 90, 98, 92]},
+    {"symbol": "XAGUSD", "name": "Silver / USD", "base": 82.454, "vol": 0.01, "type": "Commodity", "trend": [60, 55, 65, 75, 70, 85, 90, 80, 88, 92]},
+    {"symbol": "US30", "name": "Dow Jones 30", "base": 47330.4, "vol": 20.0, "type": "Index", "trend": [80, 75, 85, 95, 90, 105, 110, 100, 108, 112]},
+    {"symbol": "US500", "name": "S&P 500", "base": 6737.78, "vol": 5.0, "type": "Index", "trend": [90, 85, 95, 105, 100, 115, 120, 110, 118, 122]},
+    {"symbol": "DXY", "name": "US Dollar Index", "base": 99.345, "vol": 0.05, "type": "Index", "trend": [50, 45, 55, 65, 60, 75, 80, 70, 78, 82]},
 ]
 
 FALLBACK_INDICES = [
@@ -35,27 +33,34 @@ FALLBACK_INDICES = [
 ]
 
 FALLBACK_NEWS = [
-    "🔥 FED beri sinyal tahan suku bunga Q3",
-    "📈 Emas melonjak usai rilis data CPI rendah",
-    "🚀 BTC tembus resistensi kuat $65k",
-    "💡 Pasar global reli didorong sektor teknologi",
-    "⚡ NVIDIA catat rekor pendapatan Q4",
+    "⚔️ Konflik AS-Iran menutup Selat Hormuz, minyak WTI tembus $88/bbl.",
+    "📉 NFP AS anjlok ke -92.000, terburuk dalam beberapa bulan terakhir, picu ketakutan resesi.",
+    "🏦 The Fed pertahankan suku bunga 3.50%-3.75%, terjebak dalam stagflasi.",
+    "⚠️ VIX melonjak di atas 25 mencerminkan kepanikan pasar global (Risk-Off).",
+    "🏛️ Suku bunga BOJ tertahan di 0.75%, level tertinggi dalam 30 tahun terakhir.",
+    "🪙 Emas cetak rekor di sekitar $5,150/oz didukung permintaan safe-haven yang sangat kuat."
 ]
 
 FALLBACK_MACRO = [
-    {"title": "Fed Rate", "value": "5.50%", "impact": "HIGH", "bias": "BEARISH USD"},
-    {"title": "CPI YoY", "value": "3.2%", "impact": "HIGH", "bias": "BULLISH GOLD"},
-    {"title": "NFP", "value": "187K", "impact": "MEDIUM", "bias": "USD NEUTRAL"},
-    {"title": "DXY", "value": "104.2", "impact": "MEDIUM", "bias": "USD STRONG"},
+    {"title": "Suku Bunga The Fed", "value": "3.50-3.75%", "impact": "HIGH", "bias": "DITAHAN"},
+    {"title": "CPI AS (y/y)", "value": "2.4%", "impact": "HIGH", "bias": "BULLISH EMAS"},
+    {"title": "NFP AS", "value": "-92K", "impact": "HIGH", "bias": "BEARISH USD"},
+    {"title": "Yield Obligasi 10Y", "value": "4.15%", "impact": "HIGH", "bias": "BULLISH USD"},
+    {"title": "Minyak WTI", "value": "$88/bbl", "impact": "HIGH", "bias": "BULLISH MINYAK"},
+    {"title": "Suku Bunga ECB", "value": "2.15%", "impact": "HIGH", "bias": "DITAHAN"},
+    {"title": "Suku Bunga BOJ", "value": "0.75%", "impact": "HIGH", "bias": "DITAHAN"},
+    {"title": "Inflasi Inggris", "value": "3.0%", "impact": "HIGH", "bias": "NEUTRAL"},
+    {"title": "Indeks VIX", "value": "25.26", "impact": "HIGH", "bias": "RISK-OFF"},
 ]
 
 FALLBACK_AI = {
-    "trend": "BULLISH",
-    "strength": 8.7,
+    "trend": "STAGFLASI / RISK-OFF",
+    "strength": 9.2,
     "logic": [
-        "Liquidity sweep terdeteksi di 2028.50",
-        "Order block tervalidasi pada H1",
-        "Momentum bullish divergence (RSI)",
+        "Konflik AS-Iran (Op Epic Fury) menutup Selat Hormuz, suplai minyak terancam.",
+        "Data NFP rilis di -92.000, memicu kekhawatiran resesi yang mendalam.",
+        "The Fed terjebak stagflasi: inflasi ditekan minyak, namun pertumbuhan lambat.",
+        "Aset Safe-haven (Emas $5,150) dan Indeks Dolar (DXY 99.34) menguat drastis."
     ],
 }
 

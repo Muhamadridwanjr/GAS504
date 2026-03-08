@@ -1,5 +1,6 @@
 """FastAPI entry point for gas-calendar-news-service."""
 from __future__ import annotations
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,7 +23,20 @@ async def lifespan(app: FastAPI):
     cache = RedisCache(); await cache.connect()
     app.state.cache = cache
     logger.info("%s ready", settings.SERVICE_NAME)
+
+    # Start background scheduler: ingest yesterday → +7 days, refresh every 6h
+    from src.ingestion.scheduler import start_scheduler
+    task = asyncio.create_task(start_scheduler(interval_hours=6))
+    app.state.scheduler_task = task
+    logger.info("🗓 Calendar scheduler started (refresh every 6h)")
+
     yield
+
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
     await cache.close()
 
 app = FastAPI(title="gas-calendar-news-service", description="News & Macro Hub with ecocal.", version="1.0.0", lifespan=lifespan, docs_url="/docs", redoc_url="/redoc")

@@ -1,10 +1,14 @@
 export const PAIRS = [
-    { symbol: 'XAUUSD', name: 'Gold / USD', base: 2034.50, vol: 0.8, type: 'Commodity', trend: [30, 45, 40, 60, 55, 75, 70, 65, 80, 75] },
-    { symbol: 'BTCUSD', name: 'Bitcoin / USD', base: 64230.15, vol: 25.0, type: 'Crypto', trend: [50, 40, 70, 60, 90, 80, 100, 85, 95, 90] },
-    { symbol: 'NVDA', name: 'NVIDIA Corp.', base: 176.32, vol: 1.5, type: 'Stock', trend: [60, 55, 65, 75, 70, 85, 90, 80, 88, 92] },
-    { symbol: 'EURUSD', name: 'Euro / USD', base: 1.0854, vol: 0.0006, type: 'Forex', trend: [20, 25, 22, 30, 28, 35, 32, 38, 30, 36] },
-    { symbol: 'TSLA', name: 'Tesla Inc.', base: 247.10, vol: 3.2, type: 'Stock', trend: [80, 70, 75, 65, 60, 70, 80, 75, 85, 78] },
-    { symbol: 'USDJPY', name: 'USD / Yen', base: 149.85, vol: 0.12, type: 'Forex', trend: [40, 50, 45, 55, 60, 58, 65, 62, 70, 67] },
+    { symbol: 'XAUUSD', name: 'Gold / USD', base: 5089.872, vol: 0.5, type: 'Commodity', trend: [30, 45, 40, 60, 55, 75, 70, 65, 80, 75] },
+    { symbol: 'BTCUSD', name: 'Bitcoin / USD', base: 68783.71, vol: 50.0, type: 'Crypto', trend: [50, 40, 70, 60, 90, 80, 100, 85, 95, 90] },
+    { symbol: 'EURUSD', name: 'Euro / USD', base: 1.15554, vol: 0.0001, type: 'Forex', trend: [20, 25, 22, 30, 28, 35, 32, 38, 30, 36] },
+    { symbol: 'GBPUSD', name: 'Pound / USD', base: 1.33359, vol: 0.0001, type: 'Forex', trend: [40, 45, 42, 50, 48, 55, 52, 58, 50, 56] },
+    { symbol: 'USDJPY', name: 'USD / Yen', base: 157.880, vol: 0.01, type: 'Forex', trend: [40, 50, 45, 55, 60, 58, 65, 62, 70, 67] },
+    { symbol: 'ETHUSD', name: 'Ethereum / USD', base: 2005.41, vol: 2.0, type: 'Crypto', trend: [70, 65, 75, 85, 80, 95, 100, 90, 98, 92] },
+    { symbol: 'XAGUSD', name: 'Silver / USD', base: 82.454, vol: 0.01, type: 'Commodity', trend: [60, 55, 65, 75, 70, 85, 90, 80, 88, 92] },
+    { symbol: 'US30', name: 'Dow Jones 30', base: 47330.4, vol: 20.0, type: 'Index', trend: [80, 75, 85, 95, 90, 105, 110, 100, 108, 112] },
+    { symbol: 'US500', name: 'S&P 500', base: 6737.78, vol: 5.0, type: 'Index', trend: [90, 85, 95, 105, 100, 115, 120, 110, 118, 122] },
+    { symbol: 'DXY', name: 'US Dollar Index', base: 99.345, vol: 0.05, type: 'Index', trend: [50, 45, 55, 65, 60, 75, 80, 70, 78, 82] },
 ];
 
 export const GLOBAL_INDICES = [
