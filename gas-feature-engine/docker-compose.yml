@@ -1,0 +1,20 @@
+services:
+  gas-feature-engine:
+    build: .
+    container_name: gas-feature-engine
+    ports:
+      - "9499:9499"
+    environment:
+      - PORT=9499
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://gas-redis:6379
+      - MARKET_DATA_URL=http://gas-market-data-processor:8100
+      - CACHE_TTL=60
+    networks:
+      - gas-network
+    restart: always
+
+networks:
+  gas-network:
+    external: true

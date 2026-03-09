@@ -1,0 +1,23 @@
+services:
+  gas-pattern-detector:
+    build: .
+    container_name: gas-pattern-detector
+    ports:
+      - "9501:9501"
+    environment:
+      - PORT=9501
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://gas-redis:6379
+      - VECTOR_DB_URL=http://gas-vector-db:9004
+      - VECTOR_DB_COLLECTION=market_patterns
+      - CACHE_TTL=300
+      - DEFAULT_TOP_K=10
+      - MIN_CONFIDENCE=0.6
+    networks:
+      - gas-network
+    restart: always
+
+networks:
+  gas-network:
+    external: true

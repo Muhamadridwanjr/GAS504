@@ -1,0 +1,4 @@
+# Optional: install for Vertex AI (Gemini) support
+# pip install -r requirements-vertex.txt
+google-cloud-aiplatform>=1.71.0
+vertexai>=1.71.0

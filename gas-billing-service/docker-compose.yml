@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  gas-billing-service:
+    container_name: gas-billing-service
+    build: .
+    ports:
+      - "127.0.0.1:8004:8004"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - gas-network
+
+networks:
+  gas-network:
+    external: true

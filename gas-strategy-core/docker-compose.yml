@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  gas-strategy-core:
+    build: .
+    container_name: gas-strategy-core
+    ports:
+      - "7003:7003"
+    environment:
+      - STRATEGY_PATH=./strategies
+      - LOG_LEVEL=INFO
+    volumes:
+      - .:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - gas-network
+
+networks:
+  gas-network:
+    external: true
+    name: gas-shared-network

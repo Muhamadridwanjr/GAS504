@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  gas-telegram-bot:
+    container_name: gas-telegram-bot
+    build: .
+    env_file:
+      - .env
+    networks:
+      - gas-network
+    restart: always
+    # Security: No ports exposed to host unless necessary for webhook
+    ports:
+      - "8003:8003"
+
+networks:
+  gas-network:
+    external: true

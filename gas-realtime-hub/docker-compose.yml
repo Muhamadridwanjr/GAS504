@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  gas-realtime-hub:
+    build: .
+    container_name: gas-realtime-hub
+    ports:
+      - "8111:8111"
+    environment:
+      - PORT=8111
+      - REDIS_URL=redis://gas-redis:6379
+      - JWT_SECRET=your_super_secret_jwt_key
+      - LOG_LEVEL=INFO
+      - ENVIRONMENT=development
+    networks:
+      - gas-network
+    restart: always
+
+networks:
+  gas-network:
+    external: true

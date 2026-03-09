@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  gas-mt5-websocket:
+    container_name: gas-mt5-websocket
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8110:8110"
+    environment:
+      - MODE=socket
+      - SOCKET_PORT=8110
+      - REDIS_URL=redis://gas-redis:6379/0
+      - SYMBOLS=["EURUSD","GBPUSD","USDJPY","BTCUSD","ETHUSD","XAUUSD","XAGUSD","US30","US500","DXY"]
+      - LOG_LEVEL=INFO
+    networks:
+      - gas-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.connect(('localhost', 8110)); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  gas-network:
+    external: true

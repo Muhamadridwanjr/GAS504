@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  gas-web-backend: # 4. pastikan nama container sama dengan nama project
+    build: .
+    container_name: gas-web-backend
+    ports:
+      - "8005:8005"
+    env_file:
+      - .env
+    environment:
+      - GATEWAY_URL=http://gas-gateway-api:8000
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - gas-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  gas-network:
+    external: true

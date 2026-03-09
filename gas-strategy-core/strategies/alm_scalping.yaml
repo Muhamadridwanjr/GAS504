@@ -1,0 +1,175 @@
+name: "ALM_Scalping_Pro"
+version: "2.5"
+description: "Algorithmic Liquidity Matrix PRO - Multi Asset Scalping Strategy (SMC + Indicator Hybrid + Session Filter + Risk Engine)"
+author: "Golden AI Strategy Engine"
+
+timeframes: ["M1", "M5", "M15"]
+
+assets:
+  forex_major: ["EURUSD","GBPUSD","USDJPY","AUDUSD","NZDUSD","USDCAD","USDCHF"]
+  forex_cross: ["EURJPY","GBPJPY","EURGBP","AUDJPY"]
+
+  crypto: ["BTCUSD","ETHUSD","SOLUSD","BNBUSD","XRPUSD","ADAUSD","AVAXUSD","DOGEUSD","MATICUSD","DOTUSD"]
+
+  commodities: ["XAUUSD","XAGUSD","WTI","BRENT"]
+
+  indices: ["US30","NAS100","SPX500","GER40","UK100","HK50"]
+
+  stocks: ["AAPL","MSFT","NVDA","AMZN","TSLA","META","GOOGL","AMD","NFLX","COIN"]
+# ======================
+# 🔥 SESSION FILTER
+# ======================
+session_filter:
+  enabled: true
+  sessions:
+    - "LONDON"
+    - "NEW_YORK"
+  avoid_sessions:
+    - "ASIA_LOW_LIQUIDITY"
+
+# ======================
+# 🧠 TREND ENGINE
+# ======================
+trend_conditions:
+  - type: "indicator"
+    name: "DEMA"
+    period: 20
+    operator: "greater_than"
+    value: "EMA_50"
+    timeframe: "M15"
+
+  - type: "indicator"
+    name: "EMA"
+    period: 200
+    operator: "price_above"
+    timeframe: "M15"
+
+# ======================
+# 💧 LIQUIDITY & SMC
+# ======================
+smc_conditions:
+  - type: "smc"
+    name: "liquidity_sweep"
+    direction: "sell_side"
+    timeframe: "M5"
+
+  - type: "smc"
+    name: "order_block"
+    direction: "bullish"
+    timeframe: "M5"
+
+  - type: "smc"
+    name: "fvg"
+    status: "unfilled"
+    timeframe: "M5"
+
+# ======================
+# ⚡ MOMENTUM ENGINE
+# ======================
+momentum_conditions:
+  - type: "indicator"
+    name: "STOCH_RSI"
+    period: 14
+    operator: "greater_than"
+    value: 20
+    timeframe: "M5"
+
+  - type: "indicator"
+    name: "ROC"
+    period: 10
+    operator: "greater_than"
+    value: 0
+    timeframe: "M5"
+
+  - type: "indicator"
+    name: "RSI"
+    period: 14
+    operator: "greater_than"
+    value: 50
+    timeframe: "M5"
+
+# ======================
+# 🎯 POI + VOLATILITY
+# ======================
+poi_conditions:
+  - type: "indicator"
+    name: "close"
+    operator: "greater_than"
+    value: "BB_LOWER"
+    timeframe: "M5"
+
+  - type: "indicator"
+    name: "ATR"
+    period: 14
+    operator: "volatility_expand"
+    timeframe: "M5"
+
+# ======================
+# 🔫 ENTRY TRIGGER
+# ======================
+entry_trigger:
+  - type: "smc"
+    name: "pattern"
+    direction: "engulfing"
+    lookback: 2
+    timeframe: "M1"
+
+  - type: "smc"
+    name: "bos"
+    direction: "bullish"
+    timeframe: "M1"
+
+combination: "AND"
+action: "BUY"
+
+# ======================
+# 🛑 RISK MANAGEMENT
+# ======================
+risk_management:
+  risk_per_trade: 1.0   # %
+  max_trades_per_day: 3
+  max_drawdown: 5.0
+
+stop_loss:
+  type: "dynamic"
+  source: "atr_based"
+  atr_multiplier: 1.2
+
+take_profit:
+  type: "multi_target"
+  targets:
+    - level: "pivot_R1"
+      portion: 50
+    - level: "pivot_R2"
+      portion: 30
+    - level: "liquidity_high"
+      portion: 20
+
+# ======================
+# 🔁 SELL MIRROR LOGIC
+# ======================
+sell_conditions:
+  invert_all: true
+
+# ======================
+# 📊 EXTRA FILTER
+# ======================
+filters:
+  - type: "spread"
+    max_spread: 30
+
+  - type: "news"
+    avoid_high_impact: true
+
+  - type: "volume"
+    min_volume_threshold: "average"
+
+# ======================
+# 🤖 AI OUTPUT SUPPORT
+# ======================
+ai_output:
+  include_summary: true
+  include_session: true
+  include_pivots: true
+  include_liquidity_zones: true
+  include_multi_tf_bias: true

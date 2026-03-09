@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  gas-market-data-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gas-market-data-processor
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=gas-market-data-redis
+    ports:
+      - "8010:8010"
+    depends_on:
+      gas-market-data-redis:
+        condition: service_healthy
+    networks:
+      - gas-network
+
+  gas-market-data-redis:
+    image: redis:7-alpine
+    container_name: gas-market-data-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379" # Mapped to 6380 externally to avoid conflict with main redis, though we just use it isolated if we want. Wait, actually we can just use the main network redis. 
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - gas-network
+
+networks:
+  gas-network:
+    external: true
+    name: gas-network

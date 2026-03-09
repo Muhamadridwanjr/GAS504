@@ -1,0 +1,20 @@
+services:
+  gas-regime-detector:
+    build: .
+    container_name: gas-regime-detector
+    ports:
+      - "9503:9503"
+    environment:
+      - PORT=9503
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://gas-redis:6379
+      - REGIME_METHOD=rule_based
+      - CACHE_TTL=60
+    networks:
+      - gas-network
+    restart: always
+
+networks:
+  gas-network:
+    external: true

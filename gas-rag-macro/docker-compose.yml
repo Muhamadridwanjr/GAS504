@@ -1,0 +1,45 @@
+services:
+  gas-rag-macro:
+    build: .
+    container_name: gas-rag-macro
+    restart: unless-stopped
+    ports:
+      - "9002:9002"
+    env_file:
+      - .env
+    environment:
+      - VECTOR_DB_URL=http://gas-rag-macro-chroma:8000
+      - REDIS_URL=redis://gas-redis:6379/0
+    depends_on:
+      gas-rag-macro-chroma:
+        condition: service_started
+    volumes:
+      - ./data/news_archive:/app/data/news_archive
+      - ./data/vector_store:/app/data/vector_store
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  gas-rag-macro-chroma:
+    image: chromadb/chroma:latest
+    container_name: gas-rag-macro-chroma
+    restart: unless-stopped
+    ports:
+      - "9102:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - gas-network
+
+networks:
+  gas-network:
+    external: true
+    name: gas-network
+
+volumes:
+  chroma_data:

@@ -1,0 +1,20 @@
+services:
+  gas-market-phase:
+    build: .
+    container_name: gas-market-phase
+    ports:
+      - "9510:9510"
+    environment:
+      - PORT=9510
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://gas-redis:6379
+      - FEATURE_ENGINE_URL=http://gas-feature-engine:9499
+      - CACHE_TTL=60
+    networks:
+      - gas-network
+    restart: always
+
+networks:
+  gas-network:
+    external: true

@@ -1,0 +1,195 @@
+name: "ALM_Intraday_Pro"
+version: "2.7"
+description: "Algorithmic Liquidity Matrix Intraday PRO (SMC + KAMA Trend + Divergence + Liquidity Engine + Session + Risk Control)"
+
+author: "Golden AI Strategy Engine"
+
+timeframes: ["M5", "M15", "H1", "H4"]
+
+assets:
+  forex_major: ["EURUSD","GBPUSD","USDJPY","AUDUSD","NZDUSD","USDCAD","USDCHF"]
+  forex_cross: ["EURJPY","GBPJPY","EURGBP","AUDJPY"]
+
+  crypto: ["BTCUSD","ETHUSD","SOLUSD","BNBUSD","XRPUSD","ADAUSD","AVAXUSD","DOGEUSD","MATICUSD","DOTUSD"]
+
+  commodities: ["XAUUSD","XAGUSD","WTI","BRENT"]
+
+  indices: ["US30","NAS100","SPX500","GER40","UK100","HK50"]
+
+  stocks: ["AAPL","MSFT","NVDA","AMZN","TSLA","META","GOOGL","AMD","NFLX","COIN"]
+# ======================
+# 🕒 SESSION FILTER
+# ======================
+session_filter:
+  enabled: true
+  sessions:
+    - "LONDON"
+    - "NEW_YORK"
+  killzone:
+    - "07:00-10:00"
+    - "13:00-16:00"
+
+# ======================
+# 🧠 TREND ENGINE (HTF)
+# ======================
+trend_conditions:
+  - type: "indicator"
+    name: "KAMA"
+    period: 20
+    operator: "greater_than"
+    value: "SMA_50"
+    timeframe: "H1"
+
+  - type: "indicator"
+    name: "KAMA"
+    period: 20
+    operator: "greater_than"
+    value: "SMA_50"
+    timeframe: "H4"
+
+  - type: "market_structure"
+    name: "bos"
+    direction: "bullish"
+    timeframe: "H1"
+
+# ======================
+# 💧 LIQUIDITY ENGINE
+# ======================
+liquidity_conditions:
+  - type: "smc"
+    name: "liquidity_sweep"
+    direction: "sell_side"
+    timeframe: "M15"
+
+  - type: "smc"
+    name: "equal_lows"
+    timeframe: "M15"
+
+# ======================
+# 📦 POI (SMART MONEY ZONE)
+# ======================
+poi_conditions:
+  - type: "smc"
+    name: "demand_zone"
+    status: "fresh"
+    timeframe: "M15"
+
+  - type: "smc"
+    name: "order_block"
+    direction: "bullish"
+    timeframe: "M15"
+
+  - type: "smc"
+    name: "fvg"
+    status: "unfilled"
+    timeframe: "M15"
+
+# ======================
+# ⚡ MOMENTUM ENGINE
+# ======================
+momentum_conditions:
+  - type: "indicator"
+    name: "MACD_HIST"
+    operator: "bullish_divergence"
+    timeframe: "M15"
+
+  - type: "indicator"
+    name: "RSI"
+    period: 14
+    operator: "reversal_up"
+    value: 40
+    timeframe: "M15"
+
+  - type: "indicator"
+    name: "ADX"
+    period: 14
+    operator: "greater_than"
+    value: 20
+    timeframe: "M15"
+
+# ======================
+# 🔫 ENTRY TRIGGER (LTF)
+# ======================
+entry_trigger:
+  - type: "smc"
+    name: "pattern"
+    direction: "hammer"
+    timeframe: "M5"
+
+  - type: "smc"
+    name: "bos"
+    direction: "bullish"
+    timeframe: "M5"
+
+  - type: "smc"
+    name: "choch"
+    direction: "bullish"
+    timeframe: "M5"
+
+combination: "AND"
+action: "BUY"
+
+# ======================
+# 🛑 RISK ENGINE
+# ======================
+risk_management:
+  risk_per_trade: 1.0
+  max_trades_per_day: 2
+  max_drawdown: 4.0
+  session_stop_after_loss: 2
+
+# ======================
+# 🛑 STOP LOSS
+# ======================
+stop_loss:
+  type: "smart"
+  logic:
+    - "below_demand_zone"
+    - "below_order_block"
+  atr_multiplier: 1.5
+
+# ======================
+# 🎯 TAKE PROFIT
+# ======================
+take_profit:
+  type: "multi_target"
+  targets:
+    - level: "pivot_R1"
+      portion: 40
+    - level: "pivot_R2"
+      portion: 30
+    - level: "liquidity_high"
+      portion: 30
+
+# ======================
+# 🔁 SELL MIRROR
+# ======================
+sell_conditions:
+  invert_all: true
+
+# ======================
+# 📊 FILTER TAMBAHAN
+# ======================
+filters:
+  - type: "spread"
+    max_spread: 40
+
+  - type: "news"
+    avoid_high_impact: true
+
+  - type: "volume"
+    min_volume_threshold: "above_average"
+
+  - type: "volatility"
+    min_atr: true
+
+# ======================
+# 🤖 AI OUTPUT (Telegram Ready)
+# ======================
+ai_output:
+  include_summary: true
+  include_session: true
+  include_killzone: true
+  include_pivots: true
+  include_liquidity: true
+  include_htf_bias: true

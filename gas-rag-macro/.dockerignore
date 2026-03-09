@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+.env
+.pytest_cache/
+.coverage
+htmlcov/
+.git/
+data/news_archive/
+data/vector_store/
+credentials/

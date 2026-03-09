@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  gas-mt5-data-service:
+    build: .
+    container_name: gas-mt5-data-service
+    ports:
+      - "8100:8100"
+    environment:
+      - PORT=8100
+      - REDIS_URL=redis://gas-mt5-redis:6379/1
+      - MT5_MODE=socket
+      - MT5_EA_HOST=host.docker.internal
+      - MT5_EA_PORT=8080
+      - CACHE_TTL=3600
+      - LOG_LEVEL=INFO
+    depends_on:
+      - redis
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: gas-mt5-redis
+    ports:
+      - "6381:6379"
+    networks:
+      - gas-network
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+networks:
+  gas-network:
+    external: true
+    name: gas-network
+
+volumes:
+  redis_data:

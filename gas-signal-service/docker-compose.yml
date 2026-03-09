@@ -1,0 +1,28 @@
+services:
+  gas-signal-service:
+    build: .
+    container_name: gas-signal-service
+    ports:
+      - "8106:8106"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_signals
+      - REDIS_URL=redis://gas-redis:6379/0
+      - BILLING_SERVICE_URL=http://gas-billing-service:8004
+    networks:
+      - gas-network
+    volumes:
+      - .:/app
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8106 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8106/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+networks:
+  gas-network:
+    external: true

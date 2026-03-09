@@ -1,0 +1,45 @@
+services:
+  gas-rag-technical:
+    build: .
+    container_name: gas-rag-technical
+    restart: unless-stopped
+    ports:
+      - "9001:9001"
+    env_file:
+      - .env
+    environment:
+      - VECTOR_DB_URL=http://gas-rag-technical-chroma:8000
+      - REDIS_URL=redis://gas-redis:6379/0
+    depends_on:
+      gas-rag-technical-chroma:
+        condition: service_started
+    volumes:
+      - ./data/knowledge_base:/app/data/knowledge_base
+      - ./data/vector_store:/app/data/vector_store
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  gas-rag-technical-chroma:
+    image: chromadb/chroma:latest
+    container_name: gas-rag-technical-chroma
+    restart: unless-stopped
+    ports:
+      - "9101:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - gas-network
+
+networks:
+  gas-network:
+    external: true
+    name: gas-network
+
+volumes:
+  chroma_data:

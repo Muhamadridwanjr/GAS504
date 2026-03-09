@@ -1,0 +1,63 @@
+name: GAS Gateway API CI/CD
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  PROJECT_ID: your-gcp-project-id
+  SERVICE_NAME: gas-gateway-api
+  REGION: us-central1
+  GAR_LOCATION: us-central1-docker.pkg.dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}
+
+      - name: Build and Push Container
+        run: |-
+          docker build -t "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}" .
+          docker push "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          # Set env vars from secrets
+          env_vars: |
+            SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}
+            REDIS_HOST=${{ secrets.REDIS_HOST }}
+            AUTH_SERVICE_URL=${{ secrets.AUTH_SERVICE_URL }}
+            USER_SERVICE_URL=${{ secrets.USER_SERVICE_URL }}
+            BILLING_SERVICE_URL=${{ secrets.BILLING_SERVICE_URL }}
+            TELEGRAM_BOT_URL=${{ secrets.TELEGRAM_BOT_URL }}
+            WEB_BACKEND_URL=${{ secrets.WEB_BACKEND_URL }}
+            ENGINE_ORCHESTRATOR_URL=${{ secrets.ENGINE_ORCHESTRATOR_URL }}
+            SIGNAL_SERVICE_URL=${{ secrets.SIGNAL_SERVICE_URL }}
+            JOURNAL_SERVICE_URL=${{ secrets.JOURNAL_SERVICE_URL }}
+            RAG_TECHNICAL_URL=${{ secrets.RAG_TECHNICAL_URL }}
+            RAG_MACRO_URL=${{ secrets.RAG_MACRO_URL }}
+            AI_ORCHESTRATOR_URL=${{ secrets.AI_ORCHESTRATOR_URL }}
+            MT5_DATA_SERVICE_URL=${{ secrets.MT5_DATA_SERVICE_URL }}
+            TV_TECHNICAL_URL=${{ secrets.TV_TECHNICAL_URL }}
+            TV_FUNDAMENTAL_URL=${{ secrets.TV_FUNDAMENTAL_URL }}
+            NOTIFICATION_SERVICE_URL=${{ secrets.NOTIFICATION_SERVICE_URL }}
+            TCG_SERVICE_URL=${{ secrets.TCG_SERVICE_URL }}
+            NFT_SERVICE_URL=${{ secrets.NFT_SERVICE_URL }}
+            MARKETPLACE_SERVICE_URL=${{ secrets.MARKETPLACE_SERVICE_URL }}

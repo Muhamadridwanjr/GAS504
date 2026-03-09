@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  gas-engine-orchestrator:
+    build: .
+    container_name: gas-engine-orchestrator
+    restart: unless-stopped
+    ports:
+      - "8105:8105"
+    env_file:
+      - .env
+    environment:
+      - PORT=8105
+      - ENVIRONMENT=production
+    networks:
+      - gas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8105/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  gas-network:
+    external: true
+    name: gas-network

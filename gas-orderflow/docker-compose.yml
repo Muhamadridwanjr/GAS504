@@ -1,0 +1,22 @@
+services:
+  gas-orderflow:
+    build: .
+    container_name: gas-orderflow
+    ports:
+      - "9514:9514"
+    environment:
+      - PORT=9514
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://gas-redis:6379
+      - TICK_CHANNEL=market:ticks
+      - DELTA_THRESHOLD=100
+      - IMBALANCE_THRESHOLD=0.3
+      - CACHE_TTL=60
+    networks:
+      - gas-network
+    restart: always
+
+networks:
+  gas-network:
+    external: true

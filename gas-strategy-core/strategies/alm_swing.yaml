@@ -1,0 +1,197 @@
+name: "ALM_Swing_Pro"
+version: "3.2"
+description: "Algorithmic Liquidity Matrix Swing PRO (Macro Trend + SMC + Volume Flow + Correlation + Portfolio Risk)"
+
+author: "Golden AI Strategy Engine"
+
+timeframes: ["H1", "H4", "D1", "W1"]
+
+assets:
+  forex_major: ["EURUSD","GBPUSD","USDJPY","AUDUSD","NZDUSD","USDCAD","USDCHF"]
+  forex_cross: ["EURJPY","GBPJPY","EURGBP","AUDJPY"]
+
+  crypto: ["BTCUSD","ETHUSD","SOLUSD","BNBUSD","XRPUSD","ADAUSD","AVAXUSD","DOGEUSD","MATICUSD","DOTUSD"]
+
+  commodities: ["XAUUSD","XAGUSD","WTI","BRENT"]
+
+  indices: ["US30","NAS100","SPX500","GER40","UK100","HK50"]
+
+  stocks: ["AAPL","MSFT","NVDA","AMZN","TSLA","META","GOOGL","AMD","NFLX","COIN"]
+# ======================
+# 🌍 MACRO TREND ENGINE
+# ======================
+trend_conditions:
+  - type: "indicator"
+    name: "close"
+    operator: "greater_than"
+    value: "SMA_200"
+    timeframe: "D1"
+
+  - type: "indicator"
+    name: "HT_TRENDMODE"
+    operator: "equal"
+    value: 1
+    timeframe: "D1"
+
+  - type: "market_structure"
+    name: "bos"
+    direction: "bullish"
+    timeframe: "W1"
+
+  - type: "market_structure"
+    name: "higher_high"
+    timeframe: "D1"
+
+# ======================
+# 💧 LIQUIDITY & SMC
+# ======================
+liquidity_conditions:
+  - type: "smc"
+    name: "liquidity_sweep"
+    direction: "sell_side"
+    timeframe: "H4"
+
+  - type: "smc"
+    name: "equal_lows"
+    timeframe: "H4"
+
+# ======================
+# 📦 SMART MONEY ZONE
+# ======================
+poi_conditions:
+  - type: "smc"
+    name: "demand_zone"
+    status: "fresh"
+    timeframe: "H4"
+
+  - type: "smc"
+    name: "order_block"
+    direction: "bullish"
+    timeframe: "H4"
+
+  - type: "indicator"
+    name: "linear_regression_channel"
+    position: "lower_band"
+    timeframe: "H4"
+
+  - type: "smc"
+    name: "fvg"
+    status: "unfilled"
+    timeframe: "H4"
+
+# ======================
+# 📊 VOLUME & MOMENTUM
+# ======================
+momentum_conditions:
+  - type: "indicator"
+    name: "ADX"
+    period: 14
+    operator: "greater_than"
+    value: 25
+    timeframe: "H4"
+
+  - type: "indicator"
+    name: "OBV"
+    operator: "greater_than"
+    value: "OBV_MA"
+    timeframe: "H4"
+
+  - type: "indicator"
+    name: "RSI"
+    period: 14
+    operator: "greater_than"
+    value: 50
+    timeframe: "H4"
+
+# ======================
+# 🔗 CORRELATION ENGINE
+# ======================
+correlation_conditions:
+  - type: "indicator"
+    name: "CORREL"
+    operator: "greater_than"
+    value: 0.7
+    timeframe: "H1"
+
+  - type: "macro"
+    name: "risk_on"
+    assets: ["SPX500", "BTCUSD"]
+    condition: "bullish"
+
+# ======================
+# 🔫 ENTRY TRIGGER
+# ======================
+entry_trigger:
+  - type: "smc"
+    name: "pattern"
+    direction: "bullish_engulfing"
+    timeframe: "H1"
+
+  - type: "smc"
+    name: "choch"
+    direction: "bullish"
+    timeframe: "H1"
+
+combination: "AND"
+action: "BUY"
+
+# ======================
+# 🛑 RISK MANAGEMENT
+# ======================
+risk_management:
+  risk_per_trade: 1.0
+  max_open_positions: 5
+  max_sector_exposure: 30   # %
+  max_drawdown: 10
+
+# ======================
+# 🛑 STOP LOSS
+# ======================
+stop_loss:
+  type: "smart"
+  logic:
+    - "below_swing_low"
+    - "below_demand_zone"
+  atr_multiplier: 2.0
+
+# ======================
+# 🎯 TAKE PROFIT
+# ======================
+take_profit:
+  type: "multi_target"
+  targets:
+    - level: "previous_high"
+      portion: 40
+    - level: "liquidity_pool_high"
+      portion: 30
+    - level: "extension_fib_1.618"
+      portion: 30
+
+# ======================
+# 🔁 SELL MIRROR
+# ======================
+sell_conditions:
+  invert_all: true
+
+# ======================
+# 📊 FILTER TAMBAHAN
+# ======================
+filters:
+  - type: "news"
+    avoid_high_impact: true
+
+  - type: "volume"
+    min_volume_threshold: "above_average"
+
+  - type: "volatility"
+    min_atr: true
+
+# ======================
+# 🤖 AI OUTPUT
+# ======================
+ai_output:
+  include_summary: true
+  include_macro_bias: true
+  include_structure: true
+  include_liquidity: true
+  include_targets: true

@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  gas-auth-service:
+    container_name: gas-auth-service
+    build: .
+    ports:
+      - "127.0.0.1:8001:8001"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_user_db
+    networks:
+      - gas-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  gas-network:
+    external: true

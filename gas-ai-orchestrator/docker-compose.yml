@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  gas-ai-orchestrator:
+    build: .
+    container_name: gas-ai-orchestrator
+    ports:
+      - "9003:9003"
+    env_file:
+      - .env
+    environment:
+      - PORT=9003
+      - VECTOR_DB_URL=http://gas-vector-db:8000
+      - REDIS_URL=redis://gas-redis:6379/0
+      - LOG_LEVEL=INFO
+    volumes:
+      - /home/mridwan3101/goldenaistrategy/datamacro.md:/app/datamacro.md:ro
+    networks:
+      - gas_network
+      - gas-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9003/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  gas_network:
+    name: gas_network
+    external: true
+  gas-network:
+    name: gas-network
+    external: true

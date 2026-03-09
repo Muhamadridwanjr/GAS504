@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  gas-indicator-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gas-indicator-engine
+    ports:
+      - "8203:8203" # REST API
+      - "8204:8204" # gRPC
+    environment:
+      - ENVIRONMENT=development
+      - REST_PORT=8203
+      - GRPC_PORT=8204
+      - REDIS_HOST=gas-redis-cache
+      - REDIS_PORT=6379
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8203/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - gas-network
+
+networks:
+  gas-network:
+    external: true

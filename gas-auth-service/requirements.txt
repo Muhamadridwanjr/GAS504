@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+httpx
+structlog
+pydantic-settings
+python-dotenv
+python-multipart
+PyJWT
+sqlalchemy[asyncio]
+asyncpg
+email-validator
+bcrypt
+pytest
+pytest-asyncio

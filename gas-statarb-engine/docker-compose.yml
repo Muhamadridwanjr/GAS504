@@ -1,0 +1,22 @@
+services:
+  gas-statarb-engine:
+    build: .
+    container_name: gas-statarb-engine
+    ports:
+      - "9502:9502"
+    environment:
+      - PORT=9502
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://gas-redis:6379
+      - MARKET_DATA_URL=http://gas-feature-engine:9499
+      - DEFAULT_PAIRS=[["XAUUSD","DXY"],["EURUSD","GBPUSD"]]
+      - ZSCORE_THRESHOLD=2.0
+      - LOOKBACK_PERIOD=20
+    networks:
+      - gas-network
+    restart: always
+
+networks:
+  gas-network:
+    external: true

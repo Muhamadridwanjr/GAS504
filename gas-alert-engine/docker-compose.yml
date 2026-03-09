@@ -1,0 +1,27 @@
+services:
+  gas-alert-engine:
+    build: .
+    container_name: gas-alert-engine
+    ports:
+      - "8400:8400"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_alerts
+      - REDIS_URL=redis://gas-redis:6379/0
+    networks:
+      - gas-network
+    volumes:
+      - .:/app
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8400 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8400/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+networks:
+  gas-network:
+    external: true
