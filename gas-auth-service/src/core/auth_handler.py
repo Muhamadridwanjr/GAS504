@@ -6,10 +6,12 @@ from fastapi import HTTPException, status
 
 
 class AuthHandler:
-    def create_token(self, user_id: str, email: str) -> str:
+    def create_token(self, user_id: str, email: str, role: str = "user", username: str = "") -> str:
         payload = {
             "sub": user_id,
             "email": email,
+            "role": role,
+            "username": username,
             "iat": datetime.now(timezone.utc),
             "exp": datetime.now(timezone.utc) + timedelta(hours=settings.JWT_EXPIRE_HOURS),
         }

@@ -1,9 +1,7 @@
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from src.api.tick import router as tick_router, receive_tick
+from src.api.tick import router as tick_router
 from src.lib.logger import log
-from src.models.tick import TickBatch
-import redis.asyncio as redis
 from contextlib import asynccontextmanager
 from src.redis_client.client import redis_client
 
@@ -22,14 +20,8 @@ app = FastAPI(
     description="Service untuk menerima data tick dari EA dan meneruskannya ke realtime hub.",
     version="1.0.0",
     lifespan=lifespan,
-    redirect_slashes=False # Penting!
+    redirect_slashes=False
 )
-
-# Explicitly handle both routes to prevent 307 redirects for MT5
-@app.post("/tick")
-@app.post("/tick/")
-async def receive_tick_direct(batch: TickBatch):
-    return await receive_tick(batch)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,7 +30,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(tick_router)
+# Routes are included via router
+app.include_router(tick_router, prefix="/mt5")
 
 @app.get("/health")
 async def health():

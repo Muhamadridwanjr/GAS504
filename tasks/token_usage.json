@@ -1,0 +1,70 @@
+{
+  "models": {
+    "claude-primary": {
+      "runs": 1,
+      "errors": 0,
+      "input_total": 19076,
+      "output_total": 4,
+      "token_total": 19080,
+      "latency_total": 5.8
+    },
+    "kimi-2.5-direct": {
+      "runs": 1,
+      "errors": 0,
+      "input_total": 14,
+      "output_total": 20,
+      "token_total": 34,
+      "latency_total": 0.82
+    },
+    "gemini-studio": {
+      "runs": 1,
+      "errors": 0,
+      "input_total": 7,
+      "output_total": 2,
+      "token_total": 9,
+      "latency_total": 0.62
+    },
+    "gemini-vertex": {
+      "runs": 1,
+      "errors": 0,
+      "input_total": 7,
+      "output_total": 0,
+      "token_total": 24,
+      "latency_total": 1.09
+    },
+    "deepseek-v3.2-or": {
+      "runs": 1,
+      "errors": 0,
+      "input_total": 17,
+      "output_total": 1,
+      "token_total": 18,
+      "latency_total": 1.98
+    },
+    "deepseek-r1-or": {
+      "runs": 1,
+      "errors": 0,
+      "input_total": 12,
+      "output_total": 20,
+      "token_total": 32,
+      "latency_total": 0.26
+    },
+    "grok-or": {
+      "runs": 1,
+      "errors": 0,
+      "input_total": 4010,
+      "output_total": 1958,
+      "token_total": 5968,
+      "latency_total": 0.81
+    },
+    "gemini-lite-or": {
+      "runs": 1,
+      "errors": 0,
+      "input_total": 8,
+      "output_total": 1,
+      "token_total": 9,
+      "latency_total": 0.91
+    }
+  },
+  "last_run": "2026-03-15 19:23:52",
+  "total_runs": 1
+}

@@ -1,6 +1,8 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.api.v1 import auth, health
+from fastapi.staticfiles import StaticFiles
+from src.api.v1 import auth, health, admin_users
 from src.config import settings
 from src.utils.logger import logger
 from src.core.database import engine, Base
@@ -36,6 +38,12 @@ app.add_middleware(
 
 app.include_router(health.router, prefix="/v1", tags=["Health"])
 app.include_router(auth.router, prefix="/v1/auth", tags=["Auth"])
+app.include_router(admin_users.router, prefix="/v1", tags=["Admin"])
+
+# Mount static files for avatars
+AVATAR_DIR = "/app/static/avatars"
+os.makedirs(AVATAR_DIR, exist_ok=True)
+app.mount("/static", StaticFiles(directory="/app/static"), name="static")
 
 
 @app.get("/")

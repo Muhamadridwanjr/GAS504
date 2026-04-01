@@ -22,6 +22,17 @@ from src.routes.terminal import router as terminal_router
 from src.routes.ai import router as ai_router
 from src.routes.gas import router as gas_router
 from src.routes.fundamental import router as fundamental_router
+from src.routes.portfolio import router as portfolio_router
+from src.routes.binance import router as binance_router
+from src.routes.polymarket import router as polymarket_router
+from src.routes.memecoin import router as memecoin_router
+from src.routes.idx import router as idx_router
+from src.routes.download import router as download_router
+from src.routes.content import router as content_router
+from src.routes.screener import router as screener_router
+from src.routes.alerts import router as alerts_router
+from src.routes.tradingplan import router as tradingplan_router
+from src.routes.backtest import router as backtest_router
 from src.services.redis import redis_service
 
 structlog.configure(
@@ -77,6 +88,17 @@ app.include_router(terminal_router)
 app.include_router(ai_router)
 app.include_router(gas_router)
 app.include_router(fundamental_router)
+app.include_router(portfolio_router)
+app.include_router(binance_router)
+app.include_router(polymarket_router)
+app.include_router(memecoin_router)
+app.include_router(idx_router)
+app.include_router(download_router)
+app.include_router(content_router)
+app.include_router(screener_router)
+app.include_router(alerts_router)
+app.include_router(tradingplan_router)
+app.include_router(backtest_router)
 
 # ── WebSocket ───────────────────────────────────────────────────────
 app.websocket("/terminal/ws")(websocket_endpoint)

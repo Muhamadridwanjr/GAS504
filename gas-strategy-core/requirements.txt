@@ -3,5 +3,15 @@ uvicorn>=0.22.0
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
 PyYAML>=6.0
-pandas>=2.0.0
+pandas>=2.0.0,<3.0.0
 numpy>=1.24.0
+redis[hiredis]>=5.0.0
+openai>=1.0.0
+httpx>=0.25.0
+apscheduler>=3.10.0
+pytz>=2024.1
+# Scrapers: on-demand only (called once, return data, stop)
+# Install with: pip install ecocal tedata --no-deps if conflict
+requests>=2.31.0
+ecocal --no-deps
+tedata --no-deps

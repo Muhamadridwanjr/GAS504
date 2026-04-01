@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GAS Docs — Panduan Lengkap Web Terminal | Golden AI Strategy</title>
+  <meta name="description" content="Panduan lengkap cara pakai GAS Web Terminal. Tutorial Signal AI, Technical AI, Risk Manager, Backtesting, dan 18 fitur AI lainnya. Step-by-step dalam Bahasa Indonesia." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://docs.gasstrategyai.xyz/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23facc15'/><text x='6' y='24' font-size='20' font-weight='900' fill='%23000'>G</text></svg>" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0a0a0b;--bg-card:#111113;--bg-hover:#1a1a1d;--border:#222226;--accent:#facc15;--accent-soft:rgba(250,204,21,.08);--text:#e8e8ed;--text-dim:#52525e;--text-muted:#8a8a97;--sw:260px;--hh:64px}
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    header{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--hh);background:rgba(10,10,11,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;gap:16px}
+    .hlogo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+    .hlogo img{width:36px;height:36px;border-radius:8px;object-fit:cover}
+    .hlogo span{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;color:var(--accent)}
+    .hnav{display:flex;align-items:center;gap:4px;flex:1;margin-left:24px}
+    .hnav a{font-size:13px;font-weight:500;color:var(--text-muted);text-decoration:none;padding:5px 10px;border-radius:6px;transition:color .2s,background .2s}
+    .hnav a:hover{color:var(--text);background:var(--bg-hover)}
+    .hnav a.active{color:var(--accent)}
+    .hbtns{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .btn-in{font-size:13px;font-weight:600;color:var(--text);background:none;border:1px solid var(--border);border-radius:7px;padding:5px 14px;cursor:pointer;text-decoration:none;transition:border-color .2s}
+    .btn-in:hover{border-color:var(--accent)}
+    .btn-up{font-size:13px;font-weight:700;color:#000;background:var(--accent);border:none;border-radius:7px;padding:6px 16px;cursor:pointer;text-decoration:none;transition:opacity .2s}
+    .btn-up:hover{opacity:.85}
+    .hamburger{display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:6px 9px;cursor:pointer;color:var(--text);font-size:16px;line-height:1}
+    aside{position:fixed;top:var(--hh);left:0;bottom:0;width:var(--sw);background:var(--bg-card);border-right:1px solid var(--border);overflow-y:auto;z-index:50;padding:12px 10px 32px;transition:transform .3s ease}
+    aside::-webkit-scrollbar{width:3px}
+    aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    .sg{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);padding:10px 10px 4px;margin-top:4px}
+    .si{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:none;font-size:12.5px;font-weight:500;color:var(--text-muted);padding:7px 10px;border-radius:8px;cursor:pointer;transition:all .15s}
+    .si:hover{background:var(--bg-hover);color:var(--text)}
+    .si.active{background:var(--accent-soft);color:var(--accent);font-weight:700}
+    .si .ic{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+    main{margin-left:var(--sw);margin-top:var(--hh);padding:40px 48px 80px;max-width:880px}
+    .sec{display:none}
+    .sec.on{display:block}
+    h1{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:800;color:var(--text);margin-bottom:8px}
+    h2{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--text);margin:32px 0 12px}
+    h3{font-size:15px;font-weight:700;color:var(--text);margin:24px 0 8px}
+    p{color:var(--text-muted);font-size:14px;margin-bottom:14px;line-height:1.75}
+    .lead{font-size:15px;color:var(--text);margin-bottom:24px}
+    .tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;margin-left:6px;vertical-align:middle}
+    .te{background:rgba(59,130,246,.12);color:#60a5fa}
+    .tp{background:rgba(168,85,247,.12);color:#c084fc}
+    .tr{background:rgba(249,115,22,.12);color:#fb923c}
+    .tu{background:rgba(250,204,21,.12);color:var(--accent)}
+    .steps{list-style:none;counter-reset:s;margin:16px 0 24px}
+    .steps li{counter-increment:s;display:flex;gap:14px;margin-bottom:14px}
+    .steps li::before{content:counter(s);min-width:26px;height:26px;background:var(--accent);color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;flex-shrink:0;margin-top:2px}
+    .steps li p{margin:0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:16px 0 24px}
+    .card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;transition:border-color .2s}
+    .card:hover{border-color:rgba(250,204,21,.3)}
+    .ci{font-size:20px;margin-bottom:6px}
+    .ct{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+    .cd{font-size:12px;color:var(--text-muted);line-height:1.5}
+    .box{border-radius:10px;padding:14px 16px;margin:16px 0;font-size:13px;line-height:1.6}
+    .tip{background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);color:#86efac}
+    .warn{background:rgba(250,204,21,.06);border:1px solid rgba(250,204,21,.18);color:#fde68a}
+    .danger{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.18);color:#fca5a5}
+    .bl{font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+    table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:13px}
+    th{text-align:left;padding:9px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);border-bottom:1px solid var(--border)}
+    td{padding:9px 12px;color:var(--text-muted);border-bottom:1px solid rgba(34,34,38,.4)}
+    tr:hover td{background:var(--bg-hover);color:var(--text)}
+    hr{border:none;border-top:1px solid var(--border);margin:28px 0}
+    .bdg{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px}
+    .bg{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.18)}
+    .by{background:rgba(250,204,21,.1);color:var(--accent);border:1px solid rgba(250,204,21,.18)}
+    .br{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.18)}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:49}
+    @media(max-width:768px){
+      aside{transform:translateX(-100%)}
+      aside.open{transform:translateX(0)}
+      .overlay.show{display:block}
+      main{margin-left:0;padding:24px 18px 60px}
+      .hnav{display:none}
+      .hamburger{display:flex;align-items:center;justify-content:center}
+      h1{font-size:22px}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="https://gasstrategyai.xyz" class="hlogo">
+    <img src="https://i.ibb.co.com/603h1JF3/photo-2026-01-27-22-14-18.jpg" alt="GAS" />
+    <span>Golden AI Strategy</span>
+  </a>
+  <nav class="hnav">
+    <a href="https://gasstrategyai.xyz">Home</a>
+    <a href="https://app.gasstrategyai.xyz">App</a>
+    <a href="https://pricing.gasstrategyai.xyz">Pricing</a>
+    <a href="https://docs.gasstrategyai.xyz" class="active">Docs</a>
+    <a href="https://blog.gasstrategyai.xyz">Blog</a>
+  </nav>
+  <div class="hbtns">
+    <button onclick="lpToggleTheme()" aria-label="Toggle theme" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:6px 10px;cursor:pointer;color:var(--text);font-size:14px;line-height:1;transition:border-color .2s" id="themeBtn">🌙</button>
+    <a href="https://app.gasstrategyai.xyz/login" class="btn-in">Masuk</a>
+    <a href="https://app.gasstrategyai.xyz/signup" class="btn-up">Daftar Gratis</a>
+    <button class="hamburger" onclick="toggleSB()" aria-label="Menu">&#9776;</button>
+  </div>
+</header>
+
+<div class="overlay" id="ov" onclick="toggleSB()"></div>
+
+<aside id="sb">
+  <div class="sg">🚀 Memulai</div>
+  <button class="si active" onclick="go('mulai')"><span class="ic">🚀</span>Pengenalan Terminal</button>
+  <button class="si" onclick="go('login')"><span class="ic">🔑</span>Login &amp; Daftar</button>
+  <button class="si" onclick="go('nav')"><span class="ic">🧭</span>Cara Navigasi</button>
+
+  <div class="sg">📊 Fitur AI</div>
+  <button class="si" onclick="go('dashboard')"><span class="ic">🏠</span>Dashboard</button>
+  <button class="si" onclick="go('signal')"><span class="ic">⚡</span>Signal AI</button>
+  <button class="si" onclick="go('technical')"><span class="ic">📊</span>Technical AI</button>
+  <button class="si" onclick="go('alerts')"><span class="ic">🔔</span>Smart Alert</button>
+  <button class="si" onclick="go('session')"><span class="ic">🕐</span>Session Optimizer</button>
+  <button class="si" onclick="go('fundamental')"><span class="ic">🌍</span>Fundamental AI</button>
+  <button class="si" onclick="go('sentiment')"><span class="ic">💧</span>Sentiment AI</button>
+  <button class="si" onclick="go('calendar')"><span class="ic">📅</span>Economic Calendar</button>
+  <button class="si" onclick="go('correlation')"><span class="ic">🔗</span>Correlation</button>
+  <button class="si" onclick="go('risk')"><span class="ic">🛡️</span>Risk Manager</button>
+  <button class="si" onclick="go('hybrid')"><span class="ic">⚡</span>Hybrid System</button>
+  <button class="si" onclick="go('briefing')"><span class="ic">📰</span>Market Briefing</button>
+  <button class="si" onclick="go('psychology')"><span class="ic">🧠</span>Psychology Coach</button>
+  <button class="si" onclick="go('journal')"><span class="ic">📖</span>Trade Journal</button>
+  <button class="si" onclick="go('drawdown')"><span class="ic">📉</span>DD Recovery</button>
+  <button class="si" onclick="go('propfirm')"><span class="ic">🏢</span>Prop Firm</button>
+  <button class="si" onclick="go('screener')"><span class="ic">🔍</span>Multi Scanner</button>
+  <button class="si" onclick="go('backtest')"><span class="ic">🔬</span>Backtesting</button>
+  <button class="si" onclick="go('mentor')"><span class="ic">🎓</span>Mentor Mode</button>
+
+  <div class="sg">⚙️ Lainnya</div>
+  <button class="si" onclick="go('settings')"><span class="ic">⚙️</span>Pengaturan</button>
+  <button class="si" onclick="go('faq')"><span class="ic">❓</span>FAQ</button>
+</aside>
+
+<main>
+
+<section class="sec on" id="s-mulai">
+  <h1>🚀 Pengenalan GAS Web Terminal</h1>
+  <p class="lead">GAS (Golden AI Strategy) adalah platform trading AI all-in-one yang menggabungkan 18+ fitur AI untuk Forex, Crypto, dan Saham IDX — semuanya dalam satu web terminal.</p>
+  <div class="box tip"><div class="bl">💡 Akses</div>Buka terminal langsung di <strong>app.gasstrategyai.xyz</strong> dari browser apapun — PC, tablet, atau smartphone. Tidak perlu install apapun.</div>
+  <h2>Apa itu GAS Terminal?</h2>
+  <p>GAS Terminal adalah web app berbasis AI yang membantu trader membuat keputusan trading lebih baik melalui analisis teknikal, fundamental, sentimen pasar, dan manajemen risiko secara real-time.</p>
+  <div class="grid">
+    <div class="card"><div class="ci">⚡</div><div class="ct">Signal AI Real-Time</div><div class="cd">Generate sinyal ENTER/EXIT otomatis dengan SL, TP, dan RR ratio.</div></div>
+    <div class="card"><div class="ci">📊</div><div class="ct">18 Fitur AI</div><div class="cd">Dari technical analysis sampai psychology coach, semua ada.</div></div>
+    <div class="card"><div class="ci">📡</div><div class="ct">Data Real-Time</div><div class="cd">Harga live dari MT5 + Binance via WebSocket tanpa delay.</div></div>
+    <div class="card"><div class="ci">🌍</div><div class="ct">Multi Market</div><div class="cd">Forex, Crypto (Binance), IDX Saham, Polymarket, Memecoin.</div></div>
+  </div>
+  <h2>4 Plan Subscription</h2>
+  <table>
+    <tr><th>Plan</th><th>Harga</th><th>Fitur Utama</th></tr>
+    <tr><td><span class="bdg bg">Essential</span></td><td>$2.99/bln</td><td>Signal AI, Technical AI, Smart Alert, Session</td></tr>
+    <tr><td><span class="bdg by">Plus</span></td><td>$5.99/bln</td><td>+ Fundamental, Sentiment, Calendar, Correlation, Risk</td></tr>
+    <tr><td><span class="bdg" style="background:rgba(249,115,22,.1);color:#fb923c;border:1px solid rgba(249,115,22,.2)">Premium</span></td><td>$11.99/bln</td><td>+ Hybrid, Briefing, Psychology, Journal, DD Recovery, Prop Firm</td></tr>
+    <tr><td><span class="bdg by">Ultimate</span></td><td>$19.99/bln</td><td>+ Multi Scanner, Backtesting, Mentor Mode (semua fitur)</td></tr>
+  </table>
+</section>
+
+<section class="sec" id="s-login">
+  <h1>🔑 Login &amp; Daftar Akun</h1>
+  <p class="lead">Cara membuat akun baru dan masuk ke GAS Terminal.</p>
+  <h2>Daftar Akun Baru</h2>
+  <ol class="steps">
+    <li><p>Buka <strong>app.gasstrategyai.xyz/signup</strong> di browser.</p></li>
+    <li><p>Isi <strong>username</strong>, <strong>email</strong>, dan <strong>password</strong> (min. 8 karakter).</p></li>
+    <li><p>Klik <strong>"Kirim Kode OTP"</strong> — cek email kamu, kode berlaku 10 menit.</p></li>
+    <li><p>Masukkan kode OTP 6 digit, lalu klik <strong>"Daftar"</strong>.</p></li>
+    <li><p>Kamu langsung masuk ke terminal. Selamat datang! 🎉</p></li>
+  </ol>
+  <h2>Login Akun Existing</h2>
+  <ol class="steps">
+    <li><p>Buka <strong>app.gasstrategyai.xyz/login</strong>.</p></li>
+    <li><p>Masukkan <strong>username atau email</strong> + <strong>password</strong>.</p></li>
+    <li><p>Klik <strong>"Masuk"</strong> — terminal terbuka otomatis.</p></li>
+  </ol>
+  <div class="box warn"><div class="bl">⚠️ Perhatian</div>Akun baru otomatis dapat akses <strong>Signal AI dasar</strong>. Untuk 18 fitur lengkap, upgrade plan di menu Pricing.</div>
+</section>
+
+<section class="sec" id="s-nav">
+  <h1>🧭 Cara Navigasi Terminal</h1>
+  <p class="lead">Kenali layout utama GAS Terminal agar kamu bisa bergerak cepat.</p>
+  <h2>Layout Terminal</h2>
+  <table>
+    <tr><th>Area</th><th>Fungsi</th></tr>
+    <tr><td>🔼 GAS NEWS Ticker</td><td>Running berita live pasar (paling atas)</td></tr>
+    <tr><td>🚨 Breaking News</td><td>Banner merah berita penting di bawah header</td></tr>
+    <tr><td>☰ Header</td><td>Hamburger menu, search pair, profil user</td></tr>
+    <tr><td>📋 Sidebar Drawer</td><td>Klik ☰ — semua 18+ fitur AI ada di sini</td></tr>
+    <tr><td>📊 Area Konten</td><td>Tampilan fitur yang sedang aktif</td></tr>
+    <tr><td>🔽 Live Pair Ticker</td><td>Harga real-time semua pair di atas bottom nav</td></tr>
+    <tr><td>🗂️ Bottom Nav</td><td>5 tombol cepat: Home · Signal · Markets · Kalender · Settings</td></tr>
+    <tr><td>📊 Footer</td><td>Status koneksi WebSocket, jam WIB live, versi build</td></tr>
+  </table>
+  <h2>Shortcut Navigasi Cepat</h2>
+  <table>
+    <tr><th>Aksi</th><th>Cara</th></tr>
+    <tr><td>Buka Dashboard</td><td>Bottom Nav → 🏠 Home</td></tr>
+    <tr><td>Signal AI</td><td>Bottom Nav → ⚡ Signal</td></tr>
+    <tr><td>Semua Harga</td><td>Bottom Nav → 📈 Markets</td></tr>
+    <tr><td>Economic Calendar</td><td>Bottom Nav → 📅 Kalender</td></tr>
+    <tr><td>Semua Fitur AI</td><td>☰ Menu → pilih dari sidebar</td></tr>
+    <tr><td>Signal per Pair</td><td>Klik pair di ticker bawah</td></tr>
+  </table>
+</section>
+
+<section class="sec" id="s-dashboard">
+  <h1>🏠 Dashboard</h1>
+  <p class="lead">Halaman utama yang menampilkan ringkasan kondisi pasar real-time.</p>
+  <div class="grid">
+    <div class="card"><div class="ci">🕐</div><div class="ct">Jam WIB Live</div><div class="cd">Waktu Jakarta GMT+7 update setiap detik.</div></div>
+    <div class="card"><div class="ci">📈</div><div class="ct">Sesi Trading</div><div class="cd">Indikator sesi Tokyo, London, NY yang sedang buka.</div></div>
+    <div class="card"><div class="ci">💰</div><div class="ct">Harga Live</div><div class="cd">Snapshot XAU/USD, BTC, EUR/USD real-time.</div></div>
+    <div class="card"><div class="ci">⚡</div><div class="ct">Sinyal Terakhir</div><div class="cd">Sinyal AI terbaru — langsung bisa diklik ke detail.</div></div>
+  </div>
+  <h2>Cara Pakai</h2>
+  <ol class="steps">
+    <li><p>Klik <strong>🏠 Home</strong> di bottom nav atau pilih Dashboard di sidebar.</p></li>
+    <li><p>Lihat sesi yang aktif — London+NY overlap = volume tertinggi.</p></li>
+    <li><p>Perhatikan harga live untuk monitoring cepat kondisi pasar.</p></li>
+    <li><p>Klik sinyal di dashboard untuk langsung ke Signal AI.</p></li>
+  </ol>
+</section>
+
+<section class="sec" id="s-signal">
+  <h1>⚡ Signal AI <span class="tag te">Essential+</span></h1>
+  <p class="lead">Signal AI menghasilkan sinyal trading otomatis dengan entry, Stop Loss, Take Profit, dan Risk-Reward ratio berbasis analisis multi-timeframe.</p>
+  <h2>Cara Pakai Signal AI</h2>
+  <ol class="steps">
+    <li><p>Buka <strong>⚡ Signal AI</strong> dari sidebar atau bottom nav.</p></li>
+    <li><p>Pilih pair aset di atas (default XAUUSD). Tersedia Forex, Crypto, IDX.</p></li>
+    <li><p>Baca sinyal: <span class="bdg bg">BUY</span> atau <span class="bdg br">SELL</span> beserta level harga lengkap.</p></li>
+    <li><p>Cek <strong>Strength</strong> sinyal: HOT &gt; HIGH &gt; MEDIUM.</p></li>
+    <li><p>Gunakan harga Entry, SL, TP1/TP2/TP3 sebagai acuan eksekusi.</p></li>
+  </ol>
+  <h2>Membaca Sinyal</h2>
+  <table>
+    <tr><th>Field</th><th>Arti</th></tr>
+    <tr><td>Direction</td><td>BUY (long) atau SELL (short)</td></tr>
+    <tr><td>Entry</td><td>Harga ideal untuk masuk posisi</td></tr>
+    <tr><td>Stop Loss (SL)</td><td>Level cut loss — wajib dipasang</td></tr>
+    <tr><td>TP1 / TP2 / TP3</td><td>Target profit bertahap</td></tr>
+    <tr><td>RR Ratio</td><td>Risk:Reward — min 1:2 direkomendasikan</td></tr>
+    <tr><td>Strength: HOT</td><td>Konfluens kuat, setup terbaik</td></tr>
+    <tr><td>Strength: HIGH</td><td>Setup bagus, layak dieksekusi</td></tr>
+    <tr><td>Strength: MEDIUM</td><td>Setup sedang, hati-hati</td></tr>
+  </table>
+  <div class="box warn"><div class="bl">⚠️ Penting</div>Sinyal AI adalah alat bantu analisis, bukan jaminan profit. Selalu pakai Risk Manager untuk hitung lot size sebelum entry.</div>
+</section>
+
+<section class="sec" id="s-technical">
+  <h1>📊 Technical AI <span class="tag te">Essential+</span></h1>
+  <p class="lead">Analisis chart otomatis — deteksi pola candlestick, level support/resistance, dan indikator teknikal.</p>
+  <div class="grid">
+    <div class="card"><div class="ci">📈</div><div class="ct">TradingView Chart</div><div class="cd">Chart interaktif dengan indikator lengkap langsung di terminal.</div></div>
+    <div class="card"><div class="ci">🕯️</div><div class="ct">Candlestick Pattern</div><div class="cd">Auto-detect: Doji, Engulfing, Hammer, Pin Bar, dll.</div></div>
+    <div class="card"><div class="ci">📉</div><div class="ct">Support &amp; Resistance</div><div class="cd">Level S/R otomatis dari data historis multi-timeframe.</div></div>
+    <div class="card"><div class="ci">📊</div><div class="ct">Indikator Auto</div><div class="cd">RSI, MACD, ADX, Bollinger Bands, EMA 20/50/200.</div></div>
+  </div>
+  <ol class="steps">
+    <li><p>Buka <strong>📊 Technical AI</strong> dari sidebar.</p></li>
+    <li><p>Pilih pair dan timeframe.</p></li>
+    <li><p>Baca ringkasan AI di panel kanan: bias teknikal (Bullish / Bearish / Neutral).</p></li>
+    <li><p>Gunakan chart TradingView untuk konfirmasi visual S/R dan pola candlestick.</p></li>
+  </ol>
+</section>
+
+<section class="sec" id="s-alerts">
+  <h1>🔔 Smart Alert <span class="tag te">Essential+</span></h1>
+  <p class="lead">Set alert harga dan notifikasi sinyal baru agar tidak ketinggalan setup apapun.</p>
+  <table>
+    <tr><th>Tipe Alert</th><th>Trigger</th></tr>
+    <tr><td>Price Alert</td><td>Harga menyentuh level yang kamu set</td></tr>
+    <tr><td>Signal Alert</td><td>Sinyal AI HOT/HIGH baru masuk</td></tr>
+    <tr><td>News Alert</td><td>Breaking news masuk ke feed</td></tr>
+  </table>
+  <ol class="steps">
+    <li><p>Buka <strong>🔔 Smart Alert</strong> dari sidebar.</p></li>
+    <li><p>Klik <strong>"+ Tambah Alert"</strong>, pilih pair dan level harga.</p></li>
+    <li><p>Aktifkan notifikasi browser di <strong>Settings → Notifikasi Browser</strong>.</p></li>
+    <li><p>Saat harga menyentuh level, browser push notifikasi otomatis.</p></li>
+  </ol>
+  <div class="box tip"><div class="bl">💡 Tip</div>Aktifkan <strong>Suara Sinyal</strong> di Settings agar ada bunyi ping saat sinyal HOT masuk — berguna saat kamu tidak fokus ke layar.</div>
+</section>
+
+<section class="sec" id="s-session">
+  <h1>🕐 Session Optimizer <span class="tag te">Essential+</span></h1>
+  <p class="lead">Ketahui sesi trading yang paling aktif dan optimal untuk pair yang kamu tradingkan.</p>
+  <table>
+    <tr><th>Sesi</th><th>Waktu WIB</th><th>Pair Terbaik</th></tr>
+    <tr><td>🇯🇵 Tokyo</td><td>07:00 – 16:00</td><td>JPY pairs, XAU</td></tr>
+    <tr><td>🇬🇧 London</td><td>14:00 – 23:00</td><td>EUR, GBP, XAU</td></tr>
+    <tr><td>🇺🇸 New York</td><td>19:00 – 04:00</td><td>USD pairs, XAU, BTC</td></tr>
+    <tr><td>🔥 London+NY Overlap</td><td>19:00 – 23:00</td><td>Semua — volume PUNCAK</td></tr>
+  </table>
+  <ol class="steps">
+    <li><p>Buka <strong>🕐 Session Optimizer</strong> dari sidebar.</p></li>
+    <li><p>Lihat sesi aktif (hijau = buka, abu = tutup).</p></li>
+    <li><p>Baca rekomendasi AI: pair paling optimal saat ini.</p></li>
+    <li><p>Trading di London+NY overlap untuk volatilitas dan likuiditas terbaik.</p></li>
+  </ol>
+</section>
+
+<section class="sec" id="s-fundamental">
+  <h1>🌍 Fundamental AI <span class="tag tp">Plus+</span></h1>
+  <p class="lead">Analisis dampak data makroekonomi — suku bunga, inflasi, NFP, GDP — terhadap aset yang kamu tradingkan.</p>
+  <div class="grid">
+    <div class="card"><div class="ci">🏦</div><div class="ct">Suku Bunga</div><div class="cd">Fed, ECB, BoE, BoJ, RBA, BoC, SNB, RBNZ — update real.</div></div>
+    <div class="card"><div class="ci">📊</div><div class="ct">Data Ekonomi</div><div class="cd">CPI, NFP, GDP, PCE, PMI per negara.</div></div>
+    <div class="card"><div class="ci">🏅</div><div class="ct">Aset Global</div><div class="cd">XAU/USD, BTC, WTI Oil, DXY Index.</div></div>
+    <div class="card"><div class="ci">🌍</div><div class="ct">Risiko Geopolitik</div><div class="cd">Faktor global yang mempengaruhi pasar saat ini.</div></div>
+  </div>
+  <ol class="steps">
+    <li><p>Buka <strong>🌍 Fundamental AI</strong> dari sidebar.</p></li>
+    <li><p>Pilih tab negara/aset (USD, EUR, JPY, XAU, dll).</p></li>
+    <li><p>Baca <strong>Bias</strong>: Hawkish (bullish mata uang) / Dovish (bearish) / Neutral.</p></li>
+    <li><p>Gunakan tabel Pair Bias untuk lihat pair mana yang favored.</p></li>
+  </ol>
+  <div class="box tip"><div class="bl">💡 Konfluens</div>Gabungkan Fundamental + Technical: USD Hawkish + DXY breakout resistance = SELL EUR/USD.</div>
+</section>
+
+<section class="sec" id="s-sentiment">
+  <h1>💧 Sentiment AI <span class="tag tp">Plus+</span></h1>
+  <p class="lead">Ukur sentimen pasar via Fear &amp; Greed Index, COT data, dan posisi retail vs institutional.</p>
+  <table>
+    <tr><th>Indikator</th><th>Cara Baca</th></tr>
+    <tr><td>Fear &amp; Greed Index</td><td>0-25 Extreme Fear | 26-50 Fear | 51-75 Greed | 76-100 Extreme Greed</td></tr>
+    <tr><td>COT Data</td><td>Net long institutional = bullish fundamental</td></tr>
+    <tr><td>Retail Positioning</td><td>Contrarian: 80% retail SELL → pertimbangkan BUY</td></tr>
+  </table>
+  <ol class="steps">
+    <li><p>Buka <strong>💧 Sentiment AI</strong> dari sidebar.</p></li>
+    <li><p>Lihat Fear &amp; Greed — Extreme Fear sering jadi peluang beli aset safe haven.</p></li>
+    <li><p>Cek COT — institutional net long XAU = bullish signal jangka menengah.</p></li>
+    <li><p>Retail positioning: gunakan sebagai contrarian indicator.</p></li>
+  </ol>
+</section>
+
+<section class="sec" id="s-calendar">
+  <h1>📅 Economic Calendar <span class="tag tp">Plus+</span></h1>
+  <p class="lead">Kalender event ekonomi global dengan prediksi dampak AI — selalu siap sebelum data dirilis.</p>
+  <table>
+    <tr><th>Dampak</th><th>Arti</th><th>Rekomendasi</th></tr>
+    <tr><td>🔴 Tinggi</td><td>Volatilitas besar, pasar bergerak tajam</td><td>Hindari open 15 menit sebelum/sesudah rilis</td></tr>
+    <tr><td>🟡 Sedang</td><td>Pantau pergerakan</td><td>Pasang alert, kurangi lot size</td></tr>
+    <tr><td>⚪ Rendah</td><td>Dampak minimal</td><td>Trading normal seperti biasa</td></tr>
+  </table>
+  <ol class="steps">
+    <li><p>Buka <strong>📅 Economic Calendar</strong> dari sidebar atau bottom nav.</p></li>
+    <li><p>Pilih tab: Hari Ini / Minggu Ini / Bulan Ini.</p></li>
+    <li><p>Filter berdasarkan dampak: 🔴 Tinggi dahulu.</p></li>
+    <li><p>Klik event untuk lihat prediksi AI, actual vs forecast, dan dampak ke pair terkait.</p></li>
+  </ol>
+</section>
+
+<section class="sec" id="s-correlation">
+  <h1>🔗 Correlation <span class="tag tp">Plus+</span></h1>
+  <p class="lead">Monitor korelasi antar aset — pahami bagaimana XAU, DXY, US10Y, dan SPX saling mempengaruhi.</p>
+  <table>
+    <tr><th>Pair</th><th>Korelasi dengan</th><th>Arah</th></tr>
+    <tr><td>XAU/USD</td><td>DXY</td><td>Negatif kuat — DXY naik = XAU turun</td></tr>
+    <tr><td>XAU/USD</td><td>US10Y Yield</td><td>Negatif — yield naik = XAU turun</td></tr>
+    <tr><td>BTC/USDT</td><td>NASDAQ</td><td>Positif kuat</td></tr>
+    <tr><td>AUD/USD</td><td>Harga Komoditas</td><td>Positif kuat</td></tr>
+    <tr><td>USD/JPY</td><td>US10Y Yield</td><td>Positif kuat</td></tr>
+  </table>
+</section>
+
+<section class="sec" id="s-risk">
+  <h1>🛡️ Risk Manager AI <span class="tag tp">Plus+</span></h1>
+  <p class="lead">Kalkulasi lot size otomatis, portfolio heat, dan max drawdown aman berdasarkan balance dan risk tolerance kamu.</p>
+  <ol class="steps">
+    <li><p>Buka <strong>🛡️ Risk Manager</strong> dari sidebar.</p></li>
+    <li><p>Masukkan <strong>Balance akun</strong> (USD) dan <strong>% risk per trade</strong> (rekomendasi 1-2%).</p></li>
+    <li><p>Isi <strong>Entry price</strong> dan <strong>Stop Loss price</strong>.</p></li>
+    <li><p>AI kalkulasi <strong>Lot Size</strong> tepat agar loss tidak melebihi % risk.</p></li>
+    <li><p>Pantau <strong>Portfolio Heat</strong> — total risiko semua posisi terbuka.</p></li>
+  </ol>
+  <div class="box tip"><div class="bl">📐 Formula</div><strong>Lot Size = (Balance × Risk%) ÷ (|Entry − SL| × Pip Value)</strong><br><br>Contoh: $1,000 × 1% = $10 risiko. SL 200 pips di XAU → Lot = 0.05</div>
+  <div class="box danger"><div class="bl">🚨 Rule Wajib</div>Jangan risk lebih dari 2% per trade. Total portfolio heat max 5% dari balance. Ini aturan survival trader profesional.</div>
+</section>
+
+<section class="sec" id="s-hybrid">
+  <h1>⚡ Hybrid System AI <span class="tag tr">Premium+</span></h1>
+  <p class="lead">Gabungkan Technical + Fundamental + Sentiment jadi satu skor konfluens 0-100 untuk setiap setup.</p>
+  <table>
+    <tr><th>Komponen</th><th>Bobot</th><th>Keterangan</th></tr>
+    <tr><td>Technical Score</td><td>40%</td><td>Indikator, pola candlestick, S/R level</td></tr>
+    <tr><td>Fundamental Score</td><td>35%</td><td>Bias bank sentral, data ekonomi</td></tr>
+    <tr><td>Sentiment Score</td><td>25%</td><td>Fear &amp; Greed, COT, retail positioning</td></tr>
+  </table>
+  <table>
+    <tr><th>Skor</th><th>Status</th><th>Rekomendasi</th></tr>
+    <tr><td>80-100</td><td><span class="bdg bg">Sangat Kuat</span></td><td>Full size — setup sangat bagus</td></tr>
+    <tr><td>60-79</td><td><span class="bdg by">Kuat</span></td><td>Normal size — setup bagus</td></tr>
+    <tr><td>40-59</td><td>Sedang</td><td>Half size atau tunggu konfirmasi</td></tr>
+    <tr><td>0-39</td><td><span class="bdg br">Lemah</span></td><td>Skip — terlalu banyak konflik</td></tr>
+  </table>
+</section>
+
+<section class="sec" id="s-briefing">
+  <h1>📰 Market Briefing <span class="tag tr">Premium+</span></h1>
+  <p class="lead">Ringkasan kondisi pasar harian dan mingguan yang dibuat AI — hemat waktu analisis kamu setiap pagi.</p>
+  <p>Berisi: ringkasan pergerakan kemarin · setup potential hari ini · event ekonomi penting · risiko yang perlu diwaspadai.</p>
+  <ol class="steps">
+    <li><p>Buka setiap pagi sebelum mulai trading — <strong>📰 Market Briefing</strong> di sidebar.</p></li>
+    <li><p>Baca ringkasan dan tandai setup yang relevan dengan strategi kamu.</p></li>
+    <li><p>Klik pair di briefing untuk langsung buka Signal AI pair tersebut.</p></li>
+  </ol>
+</section>
+
+<section class="sec" id="s-psychology">
+  <h1>🧠 Psychology Coach AI <span class="tag tr">Premium+</span></h1>
+  <p class="lead">AI yang memantau pola perilaku trading — deteksi FOMO, revenge trading, dan overtrading sebelum merugikan akun.</p>
+  <div class="grid">
+    <div class="card"><div class="ci">😰</div><div class="ct">FOMO Trading</div><div class="cd">Entry terlambat karena takut ketinggalan — sering berakhir loss.</div></div>
+    <div class="card"><div class="ci">😤</div><div class="ct">Revenge Trading</div><div class="cd">Buka posisi besar setelah loss untuk balik modal — sangat berbahaya.</div></div>
+    <div class="card"><div class="ci">🎰</div><div class="ct">Overtrading</div><div class="cd">Trading terlalu sering — spread dan komisi menggerus profit.</div></div>
+    <div class="card"><div class="ci">📊</div><div class="ct">Emotion Score</div><div class="cd">Skor 0-100 kondisi psikologi trading kamu saat ini.</div></div>
+  </div>
+  <div class="box warn"><div class="bl">🧠 Tips</div>Jika Emotion Score di bawah 60, pertimbangkan tidak trading hari ini. Kondisi emosional buruk = keputusan buruk = loss yang bisa dihindari.</div>
+</section>
+
+<section class="sec" id="s-journal">
+  <h1>📖 Trade Journal AI <span class="tag tr">Premium+</span></h1>
+  <p class="lead">Catat setiap trade, AI identifikasi pola kelemahan kamu, tingkatkan performa dari waktu ke waktu.</p>
+  <ol class="steps">
+    <li><p>Buka <strong>📖 Trade Journal</strong> dari sidebar.</p></li>
+    <li><p>Setiap selesai trade, klik <strong>"+ Catat Trade"</strong> — isi pair, arah, entry, exit, hasil.</p></li>
+    <li><p>Tambahkan catatan: mengapa entry, apa yang terjadi, pelajaran.</p></li>
+    <li><p>AI analisis pola: pair mana paling profit, jam berapa win rate tertinggi.</p></li>
+    <li><p>Lihat statistik: Win Rate, Avg RR, Total PnL, Drawdown terbesar.</p></li>
+  </ol>
+  <div class="box tip"><div class="bl">💡 Habit</div>Trader profesional mencatat SEMUA trade — profit maupun loss. Journal adalah kunci perbaikan terukur.</div>
+</section>
+
+<section class="sec" id="s-drawdown">
+  <h1>📉 Drawdown Recovery <span class="tag tr">Premium+</span></h1>
+  <p class="lead">AI membantu keluar dari periode drawdown dengan strategi recovery terstruktur dan aman.</p>
+  <table>
+    <tr><th>Mode</th><th>Kondisi DD</th><th>Strategi AI</th></tr>
+    <tr><td>Conservation</td><td>5-10%</td><td>Kurangi lot 50%, hanya ambil A+ setup</td></tr>
+    <tr><td>Repair</td><td>10-20%</td><td>Lot 25%, fokus pair paling familiar</td></tr>
+    <tr><td>Survival</td><td>&gt;20%</td><td>Stop live, latihan di demo dulu</td></tr>
+  </table>
+</section>
+
+<section class="sec" id="s-propfirm">
+  <h1>🏢 Prop Firm Assistant <span class="tag tr">Premium+</span></h1>
+  <p class="lead">AI membantu lulus challenge prop firm (FTMO, MFF, The5ers) dengan memantau rules dan memberi peringatan real-time.</p>
+  <table>
+    <tr><th>Rule</th><th>FTMO</th><th>MFF</th></tr>
+    <tr><td>Max Daily Loss</td><td>5%</td><td>5%</td></tr>
+    <tr><td>Max Total DD</td><td>10%</td><td>8%</td></tr>
+    <tr><td>Profit Target</td><td>10%</td><td>8%</td></tr>
+    <tr><td>Min Trading Days</td><td>10 hari</td><td>5 hari</td></tr>
+  </table>
+  <div class="box danger"><div class="bl">🚨 Warning</div>AI kirim peringatan otomatis jika drawdown mendekati limit prop firm — cukup waktu close posisi sebelum kena rule.</div>
+</section>
+
+<section class="sec" id="s-screener">
+  <h1>🔍 Multi Scanner <span class="tag tu">Ultimate</span></h1>
+  <p class="lead">Scan 20+ pair paralel dalam hitungan detik — temukan setup terbaik tanpa cek satu per satu.</p>
+  <ol class="steps">
+    <li><p>Buka <strong>🔍 Multi Scanner</strong> dari sidebar.</p></li>
+    <li><p>Set filter: Timeframe, Strength (HOT/HIGH), Arah (BUY/SELL/Both).</p></li>
+    <li><p>Klik <strong>"Scan Sekarang"</strong> — AI analisis semua pair dalam daftar.</p></li>
+    <li><p>Hasil diurutkan berdasarkan kekuatan setup.</p></li>
+    <li><p>Klik pair dari hasil untuk langsung buka Signal AI detail.</p></li>
+  </ol>
+  <div class="box warn"><div class="bl">💰 Kredit</div>Setiap scan menggunakan <strong>15 kredit</strong>. Pantau saldo di halaman Profil.</div>
+</section>
+
+<section class="sec" id="s-backtest">
+  <h1>🔬 Backtesting Engine <span class="tag tu">Ultimate</span></h1>
+  <p class="lead">Test strategi di data historis sebelum pakai di live trading — validasi sebelum bertaruh uang nyata.</p>
+  <ol class="steps">
+    <li><p>Buka <strong>🔬 Backtesting</strong> dari sidebar.</p></li>
+    <li><p>Pilih <strong>strategi</strong>, <strong>pair</strong>, dan <strong>periode waktu</strong>.</p></li>
+    <li><p>Set parameter: Risk %, SL method, TP targets.</p></li>
+    <li><p>Klik <strong>"Jalankan Backtest"</strong> — proses 10-30 detik.</p></li>
+    <li><p>Analisis hasil: Win Rate, Profit Factor, Max DD, Equity Curve.</p></li>
+  </ol>
+  <table>
+    <tr><th>Metrik</th><th>Bagus</th><th>Perlu Review</th></tr>
+    <tr><td>Win Rate</td><td>&gt;55%</td><td>&lt;40%</td></tr>
+    <tr><td>Profit Factor</td><td>&gt;1.5</td><td>&lt;1.0</td></tr>
+    <tr><td>Max Drawdown</td><td>&lt;15%</td><td>&gt;25%</td></tr>
+    <tr><td>Avg RR Ratio</td><td>&gt;1:2</td><td>&lt;1:1</td></tr>
+  </table>
+  <div class="box warn"><div class="bl">💰 Kredit</div>Setiap backtest menggunakan <strong>20 kredit</strong>.</div>
+</section>
+
+<section class="sec" id="s-mentor">
+  <h1>🎓 Mentor Mode <span class="tag tu">Ultimate</span></h1>
+  <p class="lead">Chat langsung dengan AI Mentor — review trade, tanya strategi, atau diskusi market seperti dengan senior trader.</p>
+  <div class="grid">
+    <div class="card"><div class="ci">🔍</div><div class="ct">Review Trade</div><div class="cd">"Tolong review trade XAU/USD saya, entry 2890, SL 2870, TP 2920"</div></div>
+    <div class="card"><div class="ci">📊</div><div class="ct">Analisis Chart</div><div class="cd">"Kondisi teknikal EUR/USD H4 sekarang bagaimana? Ada setup?"</div></div>
+    <div class="card"><div class="ci">🧠</div><div class="ct">Strategi</div><div class="cd">"Jelaskan SMC Order Block yang bagus untuk XAU"</div></div>
+    <div class="card"><div class="ci">❓</div><div class="ct">Edukasi</div><div class="cd">"Apa itu liquidity sweep dan cara tradingnya?"</div></div>
+  </div>
+  <table>
+    <tr><th>Plan</th><th>Model AI</th></tr>
+    <tr><td>Essential</td><td>GPT-5 Mini</td></tr>
+    <tr><td>Plus</td><td>Gemini 3 Flash</td></tr>
+    <tr><td>Premium</td><td>Claude Haiku 4.5</td></tr>
+    <tr><td>Ultimate</td><td>Claude Sonnet 4.6</td></tr>
+  </table>
+  <div class="box warn"><div class="bl">💰 Kredit</div>Setiap pesan chat menggunakan <strong>5-10 kredit</strong> tergantung plan.</div>
+</section>
+
+<section class="sec" id="s-settings">
+  <h1>⚙️ Pengaturan Terminal</h1>
+  <p class="lead">Konfigurasi tampilan, notifikasi, pair default, dan ticker sesuai preferensi kamu.</p>
+  <table>
+    <tr><th>Setting</th><th>Fungsi</th></tr>
+    <tr><td>Mode Warna</td><td>Tema Gelap / Terang</td></tr>
+    <tr><td>Notifikasi Browser</td><td>Push notif sinyal AI baru</td></tr>
+    <tr><td>Suara Sinyal</td><td>Bunyi ping saat sinyal HOT masuk</td></tr>
+    <tr><td>Pair Default</td><td>Pair otomatis terpilih saat buka terminal</td></tr>
+    <tr><td>Timeframe Default</td><td>Timeframe chart default</td></tr>
+    <tr><td>Live News Ticker</td><td>Tampilkan/sembunyikan GAS NEWS</td></tr>
+    <tr><td>Breaking News</td><td>Tampilkan/sembunyikan banner merah</td></tr>
+    <tr><td>Live Pair Ticker</td><td>Harga pair berjalan di atas bottom nav</td></tr>
+    <tr><td>Kecepatan Ticker</td><td>Lambat → Normal → Cepat</td></tr>
+    <tr><td>Zona Waktu</td><td>WIB / WITA / WIT / UTC</td></tr>
+  </table>
+</section>
+
+<section class="sec" id="s-faq">
+  <h1>❓ FAQ — Pertanyaan Umum</h1>
+  <h3>Apakah GAS Terminal gratis?</h3>
+  <p>Ada akun gratis dengan Signal AI dasar. Untuk 18 fitur AI lengkap, upgrade ke Essential ($2.99) hingga Ultimate ($19.99/bln).</p>
+  <h3>Data harga dari mana?</h3>
+  <p>Harga live dari <strong>MT5 via EA</strong> untuk Forex &amp; XAU, dan <strong>Binance WebSocket</strong> untuk Crypto. Update real-time.</p>
+  <h3>Kredit itu apa?</h3>
+  <p>Kredit adalah mata uang virtual untuk fitur premium (Screener 15cr, Backtest 20cr, Mentor 5-10cr). Dapat kredit bulanan otomatis sesuai plan, bisa juga beli tambahan.</p>
+  <h3>Apakah sinyal AI selalu benar?</h3>
+  <p>Tidak ada sinyal 100% akurat. GAS Signal AI berdasarkan analisis teknikal dan data historis — selalu gunakan Risk Manager dan manajemen risiko yang ketat.</p>
+  <h3>Bisa dipakai di HP?</h3>
+  <p>Ya, terminal mobile-responsive. Buka <strong>app.gasstrategyai.xyz</strong> di browser HP. Tersedia juga APK Android di Settings → Download APK.</p>
+  <h3>Koneksi WebSocket putus?</h3>
+  <p>Lihat indikator di footer — jika <span style="color:#f87171">OFFLINE</span>, refresh halaman. Pastikan koneksi internet stabil.</p>
+  <h3>Cara upgrade plan?</h3>
+  <p>Buka <strong>⚙️ Settings → Pricing</strong> atau langsung ke <a href="https://pricing.gasstrategyai.xyz" style="color:var(--accent)">pricing.gasstrategyai.xyz</a>.</p>
+</section>
+
+</main>
+
+<script>
+function go(id){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.si').forEach(b=>b.classList.remove('active'));
+  var s=document.getElementById('s-'+id);
+  if(s)s.classList.add('on');
+  document.querySelectorAll('.si').forEach(b=>{
+    if(b.getAttribute('onclick')==="go('"+id+"')")b.classList.add('active');
+  });
+  if(window.innerWidth<=768){
+    document.getElementById('sb').classList.remove('open');
+    document.getElementById('ov').classList.remove('show');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleSB(){
+  document.getElementById('sb').classList.toggle('open');
+  document.getElementById('ov').classList.toggle('show');
+}
+var _dark=true;
+function lpToggleTheme(){
+  _dark=!_dark;
+  document.body.style.background=_dark?'#0a0a0b':'#f8f8f8';
+  document.body.style.color=_dark?'#e8e8ed':'#111';
+  document.getElementById('themeBtn').textContent=_dark?'🌙':'☀️';
+}
+</script>
+</body>
+</html>

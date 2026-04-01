@@ -32,6 +32,21 @@ async def get_news(limit: int = 50, db: AsyncSession = Depends(get_db)):
     svc = NewsService(repo)
     return await svc.get_news(limit)
 
+@router.get("/news/latest")
+async def get_news_latest(limit: int = 30, db: AsyncSession = Depends(get_db)):
+    """Alias used by gas-terminal-backend. Returns latest N news items as list."""
+    repo = NewsRepo(db)
+    svc = NewsService(repo)
+    result = await svc.get_news(limit)
+    # Normalise to a plain list that terminal-backend expects
+    if isinstance(result, dict):
+        items = result.get("news", result.get("items", []))
+    elif isinstance(result, list):
+        items = result
+    else:
+        items = []
+    return items
+
 @router.get("/summary", response_model=SummaryResponse)
 async def get_summary(from_date: str = Query(...), to_date: str = Query(...), db: AsyncSession = Depends(get_db)):
     repo = EventRepo(db)
@@ -41,6 +56,25 @@ async def get_summary(from_date: str = Query(...), to_date: str = Query(...), db
              "actual_value": r.actual_value, "forecast_value": r.forecast_value, "previous_value": r.previous_value}
             for r in rows]
     return SummaryResponse(summary=generate_event_summary(data), event_count=len(data))
+
+@router.get("/analysis")
+async def get_calendar_analysis():
+    """Return latest AI calendar analysis from Redis cache."""
+    cache = RedisCache(); await cache.connect()
+    try:
+        raw = await cache.get("calendar:analysis")
+        if not raw:
+            return {"status": "no_data", "message": "AI analysis belum tersedia. Jalankan scheduler jam 05:05 WIB."}
+        import json
+        try:
+            data = json.loads(raw)
+            if isinstance(data, str):
+                data = json.loads(data)
+        except Exception:
+            data = {}
+        return {"status": "ok", "data": data}
+    finally:
+        await cache.close()
 
 @router.post("/ingest/run", status_code=202)
 async def trigger_ingest(start_date: str | None = None, end_date: str | None = None, db: AsyncSession = Depends(get_db)):

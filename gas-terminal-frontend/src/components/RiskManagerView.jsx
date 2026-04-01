@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { ShieldCheck, AlertTriangle, TrendingUp, TrendingDown, Calculator } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, TrendingUp, TrendingDown, Calculator, Zap, RefreshCw } from 'lucide-react';
 import { PAIRS } from '../constants';
+import { callAIFeature } from '../services/api';
 
 const RISK_RULES = [
     { label: 'Risiko Per Trade', value: '1-2%', status: 'ok', detail: 'Jangan risiko lebih dari 2% modal per posisi' },
@@ -17,6 +18,28 @@ export default function RiskManagerView() {
     const [sl, setSl] = useState('');
     const [pair, setPair] = useState('XAUUSD');
     const [direction, setDirection] = useState('BUY');
+    const [aiAdvice, setAiAdvice] = useState('');
+    const [aiLoading, setAiLoading] = useState(false);
+
+    const fetchAIRisk = async () => {
+        setAiLoading(true);
+        setAiAdvice('');
+        try {
+            const slPips = calc ? parseFloat(calc.slPips) : null;
+            const res = await callAIFeature('risk', {
+                balance: parseFloat(balance) || 10000,
+                risk_pct: parseFloat(riskPct) || 1,
+                pair,
+                sl_pips: slPips,
+            });
+            const advice = res?.result?.summary || res?.result?.advice || res?.result || res?.recommendation || '';
+            setAiAdvice(typeof advice === 'string' ? advice : JSON.stringify(advice));
+        } catch (err) {
+            setAiAdvice('Error: ' + (err?.response?.data?.detail || err?.message || 'Coba lagi.'));
+        } finally {
+            setAiLoading(false);
+        }
+    };
 
     const selectedPair = PAIRS.find(p => p.symbol === pair) || PAIRS[0];
 
@@ -141,6 +164,22 @@ export default function RiskManagerView() {
                         ) : (
                             <div className="p-4 rounded-xl bg-[var(--bg-panel)] border border-[var(--border-color)] text-center">
                                 <p className="text-[10px] text-[var(--text-dim)]">Masukkan harga entry dan stop loss untuk kalkulasi</p>
+                            </div>
+                        )}
+
+                        {/* AI Risk Analysis */}
+                        <button
+                            onClick={fetchAIRisk}
+                            disabled={aiLoading}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] text-xs font-black hover:bg-[var(--accent)]/20 transition-all disabled:opacity-50"
+                        >
+                            {aiLoading ? <RefreshCw size={13} className="animate-spin" /> : <Zap size={13} />}
+                            {aiLoading ? 'Analisis AI...' : 'Dapatkan Saran AI · 3 cr'}
+                        </button>
+                        {aiAdvice && (
+                            <div className="p-4 rounded-xl bg-[var(--bg-panel)] border border-[var(--accent)]/20">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-[var(--accent)] mb-2">🤖 AI Risk Advisor</p>
+                                <p className="text-xs text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">{aiAdvice}</p>
                             </div>
                         )}
                     </div>

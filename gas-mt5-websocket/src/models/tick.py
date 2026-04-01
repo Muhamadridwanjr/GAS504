@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 class TickData(BaseModel):
-    time: int
+    time: float           # Some EAs send as float
     bid: Optional[float] = None
     ask: Optional[float] = None
     last: Optional[float] = None

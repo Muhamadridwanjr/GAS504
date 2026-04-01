@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gas-terminal"
+version = "3.0.0"
+description = "GAS Terminal v3 — AI Trading & DevOps Command Center"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+gas = "gas_terminal.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gas_terminal*"]

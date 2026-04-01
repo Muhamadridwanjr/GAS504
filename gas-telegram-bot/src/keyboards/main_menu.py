@@ -1,143 +1,126 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 
-# =================================================================
-# 3. Main Menu Keyboards (m_)
-# =================================================================
+SITE_URL = "https://www.gasstrategyai.xyz"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PRIMARY NAV — ReplyKeyboard (persistent bottom bar, always visible)
+# ──────────────────────────────────────────────────────────────────────────────
 
 def main_menu_keyboard() -> ReplyKeyboardMarkup:
-    """Main Menu (REPLY KEYBOARD - Persistent buttons at bottom)."""
-    keyboard = [
-        [KeyboardButton("👤 My Dash"), KeyboardButton("📰 News"), KeyboardButton("✨ Upgrade")],
-        [KeyboardButton("📝 Journal"), KeyboardButton("🎓 Academy"), KeyboardButton("💼 Plan")],
-        [KeyboardButton("🧮 Calculator"), KeyboardButton("📖 Guide"), KeyboardButton("❓ Support")],
-        [KeyboardButton("📊 Golden AI Strategy")]
-    ]
-    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    """10-button grid: Signal + Analisa + Analyst + Market + all tools."""
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton("📊 Signal"),   KeyboardButton("🧠 Analisa")],
+            [KeyboardButton("👑 Analyst"),  KeyboardButton("🌍 Market")],
+            [KeyboardButton("📰 News"),     KeyboardButton("💎 Upgrade")],
+            [KeyboardButton("🧾 Journal"),  KeyboardButton("🧮 Tools")],
+            [KeyboardButton("📘 Guide"),    KeyboardButton("❓ Support")],
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=False,
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# INLINE keyboards for section detail views
+# ──────────────────────────────────────────────────────────────────────────────
 
 def main_menu_inline_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard Inline Menu Utama untuk dashboard."""
-    keyboard = [
-        [
-            InlineKeyboardButton("🔄 Refresh Dash", callback_data="m_mydash"),
-            InlineKeyboardButton("📰 News", callback_data="m_news"),
-            InlineKeyboardButton("✨ Upgrade", callback_data="u_menu"),
-        ],
-        [
-            InlineKeyboardButton("📒 Journal", callback_data="m_jurnal"),
-            InlineKeyboardButton("🎓 Academy", callback_data="m_academy"),
-            InlineKeyboardButton("🗺 Plan", callback_data="m_plan"),
-        ],
-        [
-            InlineKeyboardButton("🧮 Calculator", callback_data="m_calc"),
-            InlineKeyboardButton("📘 Guide", callback_data="m_guide"),
-            InlineKeyboardButton("❓ Support", callback_data="m_support"),
-        ],
-        [
-            InlineKeyboardButton("🤖 Golden AI Strategy", callback_data="m_ai_analyst"),
-        ]
-    ]
-    return InlineKeyboardMarkup(keyboard)
+    """Inline shortcut — used in /status reply."""
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("📊 Signal AI",  callback_data="flow_signal"),
+         InlineKeyboardButton("💳 Topup",      url=f"{SITE_URL}/pricing")],
+    ])
 
-# =================================================================
-# 5. Advanced Submenu Keyboards (Ultimate Golden AI Edition)
-# =================================================================
 
 def news_menu_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard Menu News - Navigasi Intelijen Fundamental."""
-    keyboard = [
-        [InlineKeyboardButton("📅 Kalender Ekonomi Dunia", callback_data="m_news_calendar")],
-        [InlineKeyboardButton("🚨 High Impact News Alert", callback_data="m_news_urgent")],
-        [InlineKeyboardButton("📊 Analisis Sentimen Global", callback_data="m_news_pair_analysis")],
-        [InlineKeyboardButton("🔗 Fundamental Summary Report", callback_data="m_news_source")],
-        [InlineKeyboardButton("🔔 Set Pengingat Berita", callback_data="m_news_set_alert")],
-        [InlineKeyboardButton("💎 Intisari Makro Hari Ini", callback_data="m_news_daily_macro")],
-        [InlineKeyboardButton("⬅️ Kembali ke Markas Utama", callback_data="m_main_menu")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("📅 Kalender Ekonomi Hari Ini",  callback_data="m_news_calendar")],
+        [InlineKeyboardButton("🚨 High Impact Alert",          callback_data="m_news_urgent")],
+        [InlineKeyboardButton("📊 Sentimen Global",            callback_data="m_news_sentiment")],
+        [InlineKeyboardButton("🔗 Fundamental Summary",        callback_data="m_news_fundamental")],
+        [InlineKeyboardButton("💎 Intisari Makro Hari Ini",    callback_data="m_news_macro")],
+        [InlineKeyboardButton("🎲 Polymarket Odds",            callback_data="mkt_polymarket")],
+        [InlineKeyboardButton("🏠 Menu Utama",                 callback_data="m_main_menu")],
+    ])
 
-def jurnal_menu_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard Menu Jurnal - Arsip Kedisiplinan & Statistik."""
-    keyboard = [
-        [InlineKeyboardButton("🆕 Catat Eksekusi Trade Baru", callback_data="m_jurnal_new")],
-        [InlineKeyboardButton("📊 Dashboard Statistik Win-Rate", callback_data="m_jurnal_stats")],
-        [InlineKeyboardButton("📝 Review Riwayat & Backtest", callback_data="m_jurnal_history")],
-        [InlineKeyboardButton("🧠 Audit Psikologi & Emosi", callback_data="m_jurnal_psycho")],
-        [InlineKeyboardButton("📂 Ekspor Data Jurnal (CSV/PDF)", callback_data="m_jurnal_export")],
-        [InlineKeyboardButton("⬅️ Kembali ke Markas Utama", callback_data="m_main_menu")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
 
-def plan_menu_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard Menu Plan - Blueprint Perang & Validasi AI."""
-    keyboard = [
-        [InlineKeyboardButton("🎯 Strategi Aktif: Golden Plan", callback_data="m_plan_edit")],
-        [InlineKeyboardButton("🔍 Validasi Setup Vision AI", callback_data="m_plan_validate")],
-        [InlineKeyboardButton("🏗️ Review Zona SMC & OrderBlock", callback_data="m_plan_review_sd")],
-        [InlineKeyboardButton("⚖️ Kalkulator R:R Multi-Layer", callback_data="m_plan_rr_calc")],
-        [InlineKeyboardButton("⚙️ Log & Audit Pelanggaran Plan", callback_data="m_plan_violation_log")],
-        [InlineKeyboardButton("🚀 Optimasi Target Profit", callback_data="m_plan_optimize")],
-        [InlineKeyboardButton("⬅️ Kembali ke Markas Utama", callback_data="m_main_menu")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
+def tools_menu_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("⚖️ Lot Size Calculator",         callback_data="m_calc_pos_size")],
+        [InlineKeyboardButton("🎯 Margin & Leverage",           callback_data="m_calc_margin_leverage")],
+        [InlineKeyboardButton("📈 Pivot Point & S/R",           callback_data="m_calc_pivot")],
+        [InlineKeyboardButton("⏳ Sesi Trading Global",         callback_data="m_calc_time_converter")],
+        [InlineKeyboardButton("💱 Nilai Pip",                   callback_data="m_calc_pip_value")],
+        [InlineKeyboardButton("🛠️ Recovery Calculator",         callback_data="m_calc_recovery")],
+        [InlineKeyboardButton("⚡ R:R Calculator",              callback_data="m_calc_rr")],
+        [InlineKeyboardButton("🏠 Menu Utama",                  callback_data="m_main_menu")],
+    ])
 
-def calc_menu_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard Menu Calc - Senjata Presisi Risk Management."""
-    keyboard = [
-        [InlineKeyboardButton("⚖️ Kalkulator Lot Size Militer", callback_data="m_calc_pos_size")],
-        [InlineKeyboardButton("🎯 Analisis Margin & Leverage", callback_data="m_calc_margin_leverage")],
-        [InlineKeyboardButton("📈 Pivot Point & S/R Daily", callback_data="m_calc_pivot")],
-        [InlineKeyboardButton("⏳ Konverter Waktu Sesi Global", callback_data="m_calc_time_converter")],
-        [InlineKeyboardButton("💱 Kalkulator Nilai Pip Presisi", callback_data="m_calc_pip_value")],
-        [InlineKeyboardButton("🛠️ Tools Pemulihan Modal (Recovery)", callback_data="m_calc_recovery")],
-        [InlineKeyboardButton("⬅️ Kembali ke Markas Utama", callback_data="m_main_menu")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
+
+def journal_menu_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🆕 Catat Trade Baru",            callback_data="m_jurnal_new")],
+        [InlineKeyboardButton("📊 Statistik Win-Rate",          callback_data="m_jurnal_stats")],
+        [InlineKeyboardButton("📝 Riwayat & Backtest",          callback_data="m_jurnal_history")],
+        [InlineKeyboardButton("🧠 Audit Psikologi",             callback_data="m_jurnal_psycho")],
+        [InlineKeyboardButton("📂 Ekspor Jurnal (CSV/PDF)",     callback_data="m_jurnal_export")],
+        [InlineKeyboardButton("🏠 Menu Utama",                  callback_data="m_main_menu")],
+    ])
+
 
 def guide_menu_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard Menu Guide - Perpustakaan Pengetahuan Golden AI."""
-    keyboard = [
-        [InlineKeyboardButton("📖 Panduan Setup Sistem Awal", callback_data="m_guide_setup")],
-        [InlineKeyboardButton("❓ FAQ: Solusi Masalah Cepat", callback_data="m_guide_faq")],
-        [InlineKeyboardButton("🌐 Glossarium Istilah SMC & AI", callback_data="m_guide_glossary")],
-        [InlineKeyboardButton("🔍 Dokumentasi Fitur Vision", callback_data="m_guide_search")],
-        [InlineKeyboardButton("💬 Hubungi Support Spesialis", callback_data="m_guide_contact_support")],
-        [InlineKeyboardButton("⬅️ Kembali ke Markas Utama", callback_data="m_main_menu")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("📖 Panduan Setup Awal",          callback_data="m_guide_setup")],
+        [InlineKeyboardButton("❓ FAQ",                         callback_data="m_guide_faq")],
+        [InlineKeyboardButton("🌐 Glossarium SMC & AI",         callback_data="m_guide_glossary")],
+        [InlineKeyboardButton("🔍 Dokumentasi Fitur",           callback_data="m_guide_search")],
+        [InlineKeyboardButton("🏠 Menu Utama",                  callback_data="m_main_menu")],
+    ])
+
 
 def support_menu_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard Menu Support - Pusat Komando Bantuan."""
-    keyboard = [
-        [InlineKeyboardButton("💬 Live Chat Teknisi (24/7)", callback_data="m_support_live_chat")],
-        [InlineKeyboardButton("✉️ Buka Tiket Bantuan Baru", callback_data="m_support_new_ticket")],
-        [InlineKeyboardButton("🎫 Pantau Status Tiket Anda", callback_data="m_support_check_ticket")],
-        [InlineKeyboardButton("⚙️ Kirim Kritik & Saran", callback_data="m_support_feedback")],
-        [InlineKeyboardButton("❓ Bantuan Darurat (Urgent)", callback_data="m_support_urgent_faq")],
-        [InlineKeyboardButton("⬅️ Kembali ke Markas Utama", callback_data="m_main_menu")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("💬 Live Chat (24/7)",            callback_data="m_support_live_chat")],
+        [InlineKeyboardButton("✉️ Buka Tiket Baru",            callback_data="m_support_new_ticket")],
+        [InlineKeyboardButton("🎫 Cek Status Tiket",           callback_data="m_support_check_ticket")],
+        [InlineKeyboardButton("⚙️ Kirim Feedback",             callback_data="m_support_feedback")],
+        [InlineKeyboardButton("🏠 Menu Utama",                  callback_data="m_main_menu")],
+    ])
+
+
+# Keep these for backward-compat callbacks
+def jurnal_menu_keyboard() -> InlineKeyboardMarkup:
+    return journal_menu_keyboard()
+
+def plan_menu_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔵 Essential — Rp 29.900/bln",   url=f"{SITE_URL}/pricing")],
+        [InlineKeyboardButton("➕ Plus — Rp 59.900/bln",        url=f"{SITE_URL}/pricing")],
+        [InlineKeyboardButton("💎 Premium — Rp 119.900/bln",    url=f"{SITE_URL}/pricing")],
+        [InlineKeyboardButton("👑 Ultimate — Rp 199.900/bln",   url=f"{SITE_URL}/pricing")],
+        [InlineKeyboardButton("💳 Bayar USDT (TRC20/ERC20)",    url=f"{SITE_URL}/pricing")],
+        [InlineKeyboardButton("🏠 Menu Utama",                   callback_data="m_main_menu")],
+    ])
+
+def calc_menu_keyboard() -> InlineKeyboardMarkup:
+    return tools_menu_keyboard()
 
 def mydash_menu_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard Menu Mydash - Refleksi Portofolio & Performa."""
-    keyboard = [
-        [InlineKeyboardButton("🔭 Dashboard Overview Utama", callback_data="m_mydash_overview")],
-        [InlineKeyboardButton("📈 Kurva Performa & Ekuitas", callback_data="m_mydash_performance")],
-        [InlineKeyboardButton("🎯 Monitoring Target Profit", callback_data="m_mydash_goals")],
-        [InlineKeyboardButton("⚙️ Pengaturan & Kustomisasi Bot", callback_data="m_mydash_settings")],
-        [InlineKeyboardButton("🔑 Manajemen Lisensi & Akun", callback_data="m_mydash_account")],
-        [InlineKeyboardButton("👤 Lihat Trader DNA Saya", callback_data="i_view_profile")],
-        [InlineKeyboardButton("⬅️ Markas Utama (Dashboard)", callback_data="m_main_menu")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔭 Dashboard Overview",          callback_data="m_mydash_overview")],
+        [InlineKeyboardButton("📈 Kurva Performa & Ekuitas",    callback_data="m_mydash_performance")],
+        [InlineKeyboardButton("🎯 Target Profit Monitor",       callback_data="m_mydash_goals")],
+        [InlineKeyboardButton("⚙️ Pengaturan Bot",              callback_data="m_mydash_settings")],
+        [InlineKeyboardButton("🔑 Manajemen Lisensi & Akun",   callback_data="m_mydash_account")],
+        [InlineKeyboardButton("👤 Trader DNA Saya",             callback_data="i_view_profile")],
+    ])
 
 def academy_menu_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard Menu Academy - Kawah Candradimuka Trader."""
-    keyboard = [
-        [InlineKeyboardButton("📚 Kursus Masterclass SMC", callback_data="m_academy_courses")],
-        [InlineKeyboardButton("🎥 Rekaman Live Trading & Analisa", callback_data="m_academy_videos")],
-        [InlineKeyboardButton("📖 Artikel Strategi Eksklusif", callback_data="m_academy_articles")],
-        [InlineKeyboardButton("🧠 Uji Mental & Kuis Psikologi", callback_data="m_academy_quizzes")],
-        [InlineKeyboardButton("🏆 Tantangan Trader (Challenge)", callback_data="m_academy_challenges")],
-        [InlineKeyboardButton("⬅️ Kembali ke Markas Utama", callback_data="m_main_menu")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("📚 Kursus SMC Masterclass",      callback_data="m_academy_courses")],
+        [InlineKeyboardButton("🎥 Rekaman Live Trading",         callback_data="m_academy_videos")],
+        [InlineKeyboardButton("📖 Artikel Eksklusif",           callback_data="m_academy_articles")],
+        [InlineKeyboardButton("🧠 Kuis Psikologi",              callback_data="m_academy_quizzes")],
+        [InlineKeyboardButton("🏆 Trader Challenge",            callback_data="m_academy_challenges")],
+    ])

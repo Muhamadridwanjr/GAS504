@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://docs.gasstrategyai.xyz/</loc><lastmod>2025-03-22</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/getting-started</loc><lastmod>2025-03-20</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/api-reference</loc><lastmod>2025-03-20</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/api-reference/signals</loc><lastmod>2025-03-20</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/api-reference/analysis</loc><lastmod>2025-03-20</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/api-reference/market-data</loc><lastmod>2025-03-20</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/sdk/python</loc><lastmod>2025-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/sdk/javascript</loc><lastmod>2025-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/integrations/mt5</loc><lastmod>2025-03-10</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/features/signal-generator</loc><lastmod>2025-03-10</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/features/market-scanner</loc><lastmod>2025-03-10</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/features/risk-manager</loc><lastmod>2025-03-10</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://docs.gasstrategyai.xyz/features/backtesting</loc><lastmod>2025-03-10</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+</urlset>

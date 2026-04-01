@@ -72,8 +72,14 @@ async def root_proxy_terminal(request: Request, path: str):
 @app.websocket("/terminal/ws")
 async def terminal_ws_proxy(websocket: WebSocket):
     await websocket.accept()
-    # Convert http:// to ws:// for internal target
     target_ws_url = settings.TERMINAL_BACKEND_URL.replace("http://", "ws://") + "/terminal/ws"
+    await forward_websocket(websocket, target_ws_url)
+
+@app.websocket("/terminal/ws/{path:path}")
+async def terminal_ws_proxy_path(websocket: WebSocket, path: str):
+    """Proxy any /terminal/ws/* WebSocket to terminal-backend."""
+    await websocket.accept()
+    target_ws_url = settings.TERMINAL_BACKEND_URL.replace("http://", "ws://") + f"/terminal/ws/{path}"
     await forward_websocket(websocket, target_ws_url)
 
 @app.get("/favicon.ico", include_in_schema=False)

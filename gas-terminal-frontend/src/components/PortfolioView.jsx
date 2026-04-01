@@ -1,77 +1,32 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import axios from 'axios';
 import {
     TrendingUp, TrendingDown, BarChart2, BookOpen, Target,
     FileText, Download, Filter, ChevronDown, ChevronUp,
     Activity, Zap, Shield, Award, ArrowUpRight, ArrowDownRight,
-    Calendar, Clock, DollarSign, Percent, AlertTriangle, Check
+    Calendar, Clock, DollarSign, Percent, AlertTriangle, Check,
+    RefreshCw, Wifi, WifiOff
 } from 'lucide-react';
-// ─── MOCK DATA ───────────────────────────────────────────────
-const METRICS = {
-    balance: 18410.50, equity: 18520.00, startBalance: 10000,
-    totalProfit: 12840.50, totalLoss: 3240.80, netPnl: 9599.70,
-    winRate: 72.5, totalTrades: 247, wins: 179, losses: 68,
-    profitFactor: 2.84, maxDrawdown: 4.2, avgWin: 71.73,
-    avgLoss: 47.66, bestTrade: 840, worstTrade: -320,
-    sharpe: 2.14, avgRR: 1.8, dailyGoal: 200, todayPnl: 420,
-    growthPct: 84.1,
+import { fetchPortfolioLive, fetchOpenPositions, fetchAccountStatus } from '../services/api';
+
+const WEB_API = '/web/api/v1';
+const getHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('gas-token') || ''}` });
+// ─── CONSTANTS ──────────────────────────────────────────────────────────────
+const JOURNAL_KEY = 'gas-journal-trades';
+
+const MOCK_METRICS = {
+    balance: 10000, equity: 10000, startBalance: 10000,
+    totalProfit: 0, totalLoss: 0, netPnl: 0,
+    winRate: 0, totalTrades: 0, wins: 0, losses: 0,
+    profitFactor: 0, maxDrawdown: 0, avgWin: 0,
+    avgLoss: 0, bestTrade: 0, worstTrade: 0,
+    sharpe: 0, avgRR: 0, dailyGoal: 200, todayPnl: 0,
+    growthPct: 0,
 };
 
-function genEquityCurve() {
-    const data = []; let val = 10000;
-    const start = new Date('2025-09-01');
-    for (let i = 0; i < 180; i++) {
-        const d = new Date(start); d.setDate(d.getDate() + i);
-        if (d.getDay() === 0 || d.getDay() === 6) continue;
-        const change = (Math.random() - 0.35) * 180;
-        val = Math.max(9200, val + change);
-        data.push({ time: d.toISOString().split('T')[0], value: parseFloat(val.toFixed(2)) });
-    }
-    data[data.length - 1].value = 18410.50;
-    return data;
-}
+const ASSET_COLORS = ['#fac815', '#60a5fa', '#a78bfa', '#f97316', '#10b981', '#6b7280'];
 
-function genDailyPnl() {
-    const data = []; const start = new Date('2026-01-01');
-    for (let i = 0; i < 45; i++) {
-        const d = new Date(start); d.setDate(d.getDate() + i);
-        if (d.getDay() === 0 || d.getDay() === 6) continue;
-        const v = parseFloat(((Math.random() - 0.3) * 500).toFixed(2));
-        data.push({ time: d.toISOString().split('T')[0], value: v });
-    }
-    return data;
-}
-
-const EQUITY_DATA = genEquityCurve();
-const DAILY_PNL = genDailyPnl();
-
-const JOURNAL = [
-    { id: 1, time: '2026-03-07 14:32', asset: 'XAUUSD', dir: 'BUY',  entry: 2031.50, exit: 2048.20, lot: 0.10, rr: 2.4, pnl: +168.00, dur: '2h 14m', tag: 'Trend' },
-    { id: 2, time: '2026-03-07 11:20', asset: 'EURUSD', dir: 'SELL', entry: 1.0872, exit: 1.0841, lot: 0.50, rr: 1.8, pnl: +155.00, dur: '45m', tag: 'Breakout' },
-    { id: 3, time: '2026-03-07 09:45', asset: 'BTCUSD', dir: 'BUY',  entry: 64100, exit: 63820, lot: 0.01, rr: -1.0, pnl: -28.00, dur: '30m', tag: 'Reversal' },
-    { id: 4, time: '2026-03-06 15:10', asset: 'XAUUSD', dir: 'SELL', entry: 2045.80, exit: 2031.20, lot: 0.20, rr: 2.1, pnl: +292.00, dur: '3h 05m', tag: 'Trend' },
-    { id: 5, time: '2026-03-06 10:30', asset: 'NAS100', dir: 'BUY',  entry: 19840, exit: 19920, lot: 0.05, rr: 1.6, pnl: +400.00, dur: '1h 22m', tag: 'News' },
-    { id: 6, time: '2026-03-05 14:00', asset: 'GBPUSD', dir: 'BUY',  entry: 1.2640, exit: 1.2608, lot: 0.30, rr: -1.0, pnl: -96.00, dur: '55m', tag: 'Reversal' },
-    { id: 7, time: '2026-03-05 09:15', asset: 'XAUUSD', dir: 'BUY',  entry: 2018.40, exit: 2038.60, lot: 0.15, rr: 2.8, pnl: +303.00, dur: '4h 10m', tag: 'Trend' },
-    { id: 8, time: '2026-03-04 13:45', asset: 'US500',  dir: 'SELL', entry: 5120, exit: 5098, lot: 0.10, rr: 1.9, pnl: +220.00, dur: '2h 30m', tag: 'Breakout' },
-    { id: 9, time: '2026-03-04 10:00', asset: 'EURUSD', dir: 'BUY',  entry: 1.0820, exit: 1.0808, lot: 0.50, rr: -1.0, pnl: -60.00, dur: '40m', tag: 'News' },
-    { id: 10,time: '2026-03-03 15:30', asset: 'XAUUSD', dir: 'SELL', entry: 2060.10, exit: 2035.40, lot: 0.10, rr: 3.2, pnl: +247.00, dur: '5h 15m', tag: 'Trend' },
-];
-
-const ASSET_DIST = [
-    { name: 'XAUUSD', pct: 42, color: '#fac815' },
-    { name: 'EURUSD', pct: 18, color: '#60a5fa' },
-    { name: 'NAS100', pct: 14, color: '#a78bfa' },
-    { name: 'BTCUSD', pct: 12, color: '#f97316' },
-    { name: 'Others', pct: 14, color: '#6b7280' },
-];
-
-const MONTHLY_RETURNS = [
-    { m: 'Sep', v: 3.2 }, { m: 'Oct', v: 6.8 }, { m: 'Nov', v: -1.4 },
-    { m: 'Dec', v: 9.1 }, { m: 'Jan', v: 12.4 }, { m: 'Feb', v: 7.6 },
-    { m: 'Mar', v: 4.1 },
-];
-
-const TRADING_PLAN_DEFAULT = `# TRADING PLAN — GAS PRO
+const TRADING_PLAN_DEFAULT = `# TRADING PLAN — Golden AI Strategy
 
 ## 🎯 TUJUAN TRADING
 - Target bulanan: +8% dari balance
@@ -100,7 +55,7 @@ const TRADING_PLAN_DEFAULT = `# TRADING PLAN — GAS PRO
 - Selalu pasang SL sebelum entry
 
 ## 📝 JURNAL & REVIEW
-- Catat setiap trade di journal GAS PRO
+- Catat setiap trade di journal Golden AI Strategy
 - Review mingguan setiap Sabtu pagi
 - Monthly review dan adjust plan`;
 
@@ -314,6 +269,20 @@ function PnLChart({ data }) {
     );
 }
 
+// ─── CHECKLIST ITEM (extracted so useState is valid at top level) ────────────
+function ChecklistItem({ label }) {
+    const [checked, setChecked] = React.useState(false);
+    return (
+        <label className="flex items-center gap-2.5 cursor-pointer group">
+            <div onClick={() => setChecked(p => !p)}
+                className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all shrink-0 ${checked ? 'bg-[var(--success)] border-[var(--success)]' : 'border-[var(--border-color)] group-hover:border-[var(--text-dim)]'}`}>
+                {checked && <Check size={10} className="text-white" />}
+            </div>
+            <span className={`text-xs transition-all ${checked ? 'line-through text-[var(--text-dim)]' : 'text-[var(--text-secondary)]'}`}>{label}</span>
+        </label>
+    );
+}
+
 // ─── KPI CARD ────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, up, icon: Icon, highlight }) {
@@ -341,34 +310,198 @@ export default function PortfolioView({ theme = 'dark' }) {
     const [sortCol, setSortCol] = useState('time');
     const [sortAsc, setSortAsc] = useState(false);
 
-    const savePlan = () => {
-        localStorage.setItem('gas-trading-plan', tradingPlan);
+    // ── Live MT5 data ──────────────────────────────────────────────────
+    const [liveData, setLiveData] = useState(null);
+    const [liveLoading, setLiveLoading] = useState(true);
+    const [liveStatus, setLiveStatus] = useState('loading');
+    const [openPositions, setOpenPositions] = useState([]);
+    const [accountMode, setAccountMode] = useState('offline'); // 'user_ea' | 'main_ea' | 'offline'
+    const [localJournal, setLocalJournal] = useState([]);
+    const [journalLoading, setJournalLoading] = useState(false);
+
+    const loadJournal = useCallback(async () => {
+        setJournalLoading(true);
+        try {
+            const res = await axios.get(`${WEB_API}/journal/`, { headers: getHeaders() });
+            const entries = (res.data?.entries || []).map(e => ({
+                id: e.id,
+                time: e.created_at ? new Date(e.created_at).toLocaleDateString('id-ID') : '',
+                date: e.created_at ? e.created_at.slice(0, 7) : '',
+                pair: e.pair || '',
+                type: e.direction || '',
+                entry: parseFloat(e.entry_price) || 0,
+                exit: parseFloat(e.exit_price) || 0,
+                sl: parseFloat(e.sl) || 0,
+                lot: parseFloat(e.lot) || 0,
+                pnl: parseFloat(e.pnl) || 0,
+                notes: e.notes || '',
+                source: e.source || 'manual',
+            }));
+            setLocalJournal(entries);
+        } catch {
+            setLocalJournal([]);
+        } finally {
+            setJournalLoading(false);
+        }
+    }, []);
+
+    const loadLiveData = async () => {
+        setLiveLoading(true);
+        try {
+            const [data, posData, statusData] = await Promise.all([
+                fetchPortfolioLive(),
+                fetchOpenPositions(),
+                fetchAccountStatus(),
+            ]);
+            if (data && data.balance !== null) {
+                setLiveData(data);
+                setLiveStatus(data.status);
+            } else {
+                setLiveStatus('no_heartbeat');
+            }
+            if (posData?.positions) setOpenPositions(posData.positions);
+            if (statusData?.mode) setAccountMode(statusData.mode);
+        } catch (e) {
+            setLiveStatus('error');
+        } finally {
+            setLiveLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadLiveData();
+        loadJournal();
+        const iv = setInterval(loadLiveData, 10000);
+        return () => clearInterval(iv);
+    }, [loadJournal]);
+
+    // Build METRICS from live data (falls back to MOCK_METRICS)
+    const METRICS = useMemo(() => {
+        if (liveData && liveData.balance) {
+            const balance = liveData.balance;
+            const equity = liveData.equity;
+            const floatingPnl = liveData.floating_pnl || 0;
+            const startBalance = MOCK_METRICS.startBalance;
+            const netPnl = balance - startBalance;
+            const growthPct = startBalance > 0 ? parseFloat(((netPnl / startBalance)*100).toFixed(1)) : 0;
+            return {
+                ...MOCK_METRICS,
+                balance,
+                equity,
+                startBalance,
+                netPnl,
+                floatingPnl,
+                growthPct,
+                open_positions: openPositions.length || liveData.open_positions || 0,
+                todayPnl: floatingPnl,
+            };
+        }
+        return MOCK_METRICS;
+    }, [liveData, openPositions]);
+
+
+    // Refresh journal from backend when switching to journal tab
+    useEffect(() => {
+        if (tab === 'journal') loadJournal();
+    }, [tab, loadJournal]);
+
+    // Chart data from live API (empty arrays show empty-state in charts)
+    const equityData = liveData?.equity_history || liveData?.equity_curve || [];
+    const dailyPnlData = liveData?.daily_pnl || liveData?.pnl_history || [];
+
+    // Asset distribution derived from journal trades
+    const assetDist = useMemo(() => {
+        if (localJournal.length === 0) return [];
+        const counts = {};
+        localJournal.forEach(t => { counts[t.pair] = (counts[t.pair] || 0) + 1; });
+        const total = localJournal.length;
+        return Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6)
+            .map(([name, count], i) => ({ name, pct: Math.round((count / total) * 100), color: ASSET_COLORS[i] }));
+    }, [localJournal]);
+
+    // Monthly returns derived from journal trades
+    const monthlyReturns = useMemo(() => {
+        if (localJournal.length === 0) return [];
+        const grouped = {};
+        localJournal.forEach(t => {
+            const key = t.date ? t.date.slice(0, 7) : null;
+            if (!key) return;
+            grouped[key] = (grouped[key] || 0) + (t.pnl || 0);
+        });
+        const bal = METRICS.balance || 10000;
+        return Object.entries(grouped)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .slice(-7)
+            .map(([key, pnl]) => ({
+                m: key.slice(5),
+                v: parseFloat(((pnl / bal) * 100).toFixed(1))
+            }));
+    }, [localJournal, METRICS.balance]);
+
+    // Journal mapped to table schema
+    const journalForTable = useMemo(() => localJournal.map(t => ({
+        id: t.id,
+        time: t.date || '',
+        asset: t.pair || '',
+        dir: t.type || '',
+        entry: t.entry || 0,
+        exit: t.exit || 0,
+        lot: t.lot || 0,
+        rr: '—',
+        pnl: t.pnl || 0,
+        dur: '—',
+        tag: 'Manual',
+    })), [localJournal]);
+
+    const savePlan = async () => {
+        try {
+            await axios.post(`${WEB_API}/plan/`, {
+                notes: tradingPlan,
+                title: "My Trading Plan",
+            }, { headers: getHeaders() });
+        } catch {
+            // Fallback to localStorage if API unavailable
+            localStorage.setItem('gas-trading-plan', tradingPlan);
+        }
         setPlanSaved(true);
         setTimeout(() => setPlanSaved(false), 2000);
     };
 
     useEffect(() => {
-        const saved = localStorage.getItem('gas-trading-plan');
-        if (saved) setTradingPlan(saved);
+        // Load plan from backend first, localStorage as fallback
+        axios.get(`${WEB_API}/plan/`, { headers: getHeaders() })
+            .then(res => {
+                const notes = res.data?.plan?.notes;
+                if (notes) setTradingPlan(notes);
+                else {
+                    const saved = localStorage.getItem('gas-trading-plan');
+                    if (saved) setTradingPlan(saved);
+                }
+            })
+            .catch(() => {
+                const saved = localStorage.getItem('gas-trading-plan');
+                if (saved) setTradingPlan(saved);
+            });
     }, []);
 
     const filteredJournal = useMemo(() => {
-        let d = [...JOURNAL];
+        let d = [...journalForTable];
         if (journalFilter === 'win') d = d.filter(t => t.pnl > 0);
         if (journalFilter === 'loss') d = d.filter(t => t.pnl < 0);
         if (journalFilter === 'buy') d = d.filter(t => t.dir === 'BUY');
         if (journalFilter === 'sell') d = d.filter(t => t.dir === 'SELL');
         d.sort((a, b) => {
             if (sortCol === 'pnl') return sortAsc ? a.pnl - b.pnl : b.pnl - a.pnl;
-            if (sortCol === 'rr') return sortAsc ? a.rr - b.rr : b.rr - a.rr;
             return sortAsc ? a.id - b.id : b.id - a.id;
         });
         return d;
-    }, [journalFilter, sortCol, sortAsc]);
+    }, [journalForTable, journalFilter, sortCol, sortAsc]);
 
     const exportCSV = () => {
-        const rows = ['Time,Asset,Dir,Entry,Exit,Lot,R:R,P&L,Duration,Tag'];
-        JOURNAL.forEach(t => rows.push(`${t.time},${t.asset},${t.dir},${t.entry},${t.exit},${t.lot},${t.rr},${t.pnl},${t.dur},${t.tag}`));
+        const rows = ['Time,Asset,Dir,Entry,Exit,Lot,P&L,Tag'];
+        journalForTable.forEach(t => rows.push(`${t.time},${t.asset},${t.dir},${t.entry},${t.exit},${t.lot},${t.pnl},${t.tag}`));
         const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = 'gas_journal.csv'; a.click();
@@ -376,27 +509,62 @@ export default function PortfolioView({ theme = 'dark' }) {
 
     const TABS = [
         { id: 'dashboard', label: '📊 Dashboard', icon: BarChart2 },
+        { id: 'positions', label: `📌 Positions ${openPositions.length > 0 ? `(${openPositions.length})` : ''}`, icon: Activity },
         { id: 'journal',   label: '📒 Journal',   icon: BookOpen },
         { id: 'backtest',  label: '🔬 Backtest',  icon: Activity },
         { id: 'plan',      label: '📋 Trading Plan', icon: FileText },
     ];
 
+    const modeLabel = accountMode === 'user_ea' ? '🟢 User EA' : accountMode === 'main_ea' ? '🟡 Main EA' : '🔴 Offline';
+    const acctSubtitle = liveData?.account_id
+        ? `MT5 #${liveData.account_id} · ${liveData.broker || ''} · ${liveData.currency || 'USD'}`
+        : liveData?.symbol
+        ? `MT5 EA · ${liveData.symbol} · Main EA`
+        : 'MT5 EA · Waiting for heartbeat...';
+
     return (
         <div className="p-4 md:p-6 pb-24 md:pb-8 max-w-7xl mx-auto space-y-5">
 
             {/* ── PAGE HEADER ── */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                     <h2 className="text-2xl font-display font-black uppercase">Portfolio</h2>
-                    <p className="text-[11px] text-[var(--text-dim)] font-bold mt-0.5">Updated live · Mar 2026 · Paper Account</p>
+                    <p className="text-[11px] text-[var(--text-dim)] font-bold mt-0.5">{acctSubtitle}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--success)]/10 border border-[var(--success)]/20">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse" />
-                        <span className="text-[10px] font-black text-[var(--success)] uppercase">Live</span>
-                    </div>
+                    <button onClick={loadLiveData} className="text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors">
+                        <RefreshCw size={13} className={liveLoading ? 'animate-spin' : ''} />
+                    </button>
+                    {liveStatus === 'live' ? (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--success)]/10 border border-[var(--success)]/20">
+                            <Wifi size={11} className="text-[var(--success)]" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse" />
+                            <span className="text-[10px] font-black text-[var(--success)] uppercase">MT5 Live</span>
+                        </div>
+                    ) : liveStatus === 'loading' ? (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-400/10 border border-yellow-400/20">
+                            <RefreshCw size={11} className="text-yellow-400 animate-spin" />
+                            <span className="text-[10px] font-black text-yellow-400 uppercase">Connecting...</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                            <WifiOff size={11} className="text-red-400" />
+                            <span className="text-[10px] font-black text-red-400 uppercase">EA Offline</span>
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {/* EA Offline Banner */}
+            {liveStatus === 'no_heartbeat' && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-yellow-400/10 border border-yellow-400/30">
+                    <AlertTriangle size={15} className="text-yellow-400 shrink-0" />
+                    <div>
+                        <p className="text-xs font-black text-yellow-400">EA Heartbeat Tidak Diterima</p>
+                        <p className="text-[10px] text-[var(--text-dim)]">Pastikan EA Golden AI Strategy v4.0 berjalan di MT5 dan terhubung ke GAS_SECURE_GATEWAY</p>
+                    </div>
+                </div>
+            )}
 
             {/* ── TABS ── */}
             <div className="flex gap-1 overflow-x-auto scrollbar-none bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-1">
@@ -407,6 +575,138 @@ export default function PortfolioView({ theme = 'dark' }) {
                     </button>
                 ))}
             </div>
+
+            {/* ══════════════════════════════════════════════
+                TAB: POSITIONS (Live MT5 Open Trades)
+            ══════════════════════════════════════════════ */}
+            {tab === 'positions' && (
+                <div className="space-y-4">
+                    {/* Mode Badge */}
+                    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${accountMode === 'user_ea' ? 'bg-green-500/5 border-green-500/20' : accountMode === 'main_ea' ? 'bg-yellow-400/5 border-yellow-400/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                        <span className="text-base">{accountMode === 'user_ea' ? '🟢' : accountMode === 'main_ea' ? '🟡' : '🔴'}</span>
+                        <div className="flex-1">
+                            <p className="text-xs font-black text-[var(--text-primary)]">
+                                Mode: {accountMode === 'user_ea' ? 'Per-User EA (Akurat)' : accountMode === 'main_ea' ? 'Main EA (Shared)' : 'Offline'}
+                            </p>
+                            <p className="text-[10px] text-[var(--text-dim)]">
+                                {accountMode === 'user_ea'
+                                    ? `Akun: #${liveData?.account_id || '?'} · ${liveData?.broker || ''} · ${liveData?.leverage || '?'}x Leverage`
+                                    : accountMode === 'main_ea'
+                                    ? 'Kirim EA per-user untuk melihat posisi akun kamu sendiri'
+                                    : 'Tidak ada EA terhubung. Setup EA User di bawah.'}
+                            </p>
+                        </div>
+                        {liveData?.account_id && (
+                            <span className="text-[9px] font-black px-2 py-1 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)]">
+                                {liveData.currency || 'USD'} Account
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Live Account KPIs */}
+                    {liveData?.balance && (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <KpiCard label="Balance" value={`$${parseFloat(liveData.balance).toLocaleString()}`} sub="Saldo akun" icon={DollarSign} highlight />
+                            <KpiCard label="Equity" value={`$${parseFloat(liveData.equity).toLocaleString()}`} sub="Termasuk floating" icon={TrendingUp} up={liveData.floating_pnl >= 0} />
+                            <KpiCard label="Floating P&L" value={`${liveData.floating_pnl >= 0 ? '+' : ''}$${parseFloat(liveData.floating_pnl || 0).toFixed(2)}`} sub="Posisi terbuka" icon={Activity} up={liveData.floating_pnl >= 0} />
+                            <KpiCard label="Free Margin" value={`$${parseFloat(liveData.free_margin || liveData.equity || 0).toLocaleString()}`} sub="Margin tersedia" icon={Shield} />
+                        </div>
+                    )}
+
+                    {/* Positions Table */}
+                    <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden">
+                        <div className="px-5 py-3 bg-[var(--bg-panel)] border-b border-[var(--border-color)] flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${openPositions.length > 0 ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`} />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-dim)]">
+                                    Open Positions ({openPositions.length})
+                                </span>
+                            </div>
+                            <button onClick={loadLiveData} className="text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors">
+                                <RefreshCw size={12} className={liveLoading ? 'animate-spin' : ''} />
+                            </button>
+                        </div>
+                        {openPositions.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs min-w-[700px]">
+                                    <thead>
+                                        <tr className="bg-[var(--bg-panel)] border-b border-[var(--border-color)]">
+                                            {['Ticket', 'Symbol', 'Arah', 'Lot', 'Entry', 'Current', 'P&L', 'Swap', 'Magic'].map(h => (
+                                                <th key={h} className="px-4 py-2.5 text-left text-[9px] font-black uppercase tracking-widest text-[var(--text-dim)]">{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {openPositions.map((pos, i) => {
+                                            const pnl = parseFloat(pos.pnl || 0);
+                                            const isWin = pnl >= 0;
+                                            return (
+                                                <tr key={i} className="border-b border-[var(--border-color)] hover:bg-[var(--bg-hover)] transition-colors">
+                                                    <td className="px-4 py-3 font-mono text-[var(--text-dim)] text-[11px]">{pos.ticket || '—'}</td>
+                                                    <td className="px-4 py-3 font-black text-[var(--text-primary)]">{pos.symbol}</td>
+                                                    <td className="px-4 py-3">
+                                                        <span className={`px-2 py-0.5 rounded text-[9px] font-black tracking-widest ${pos.direction === 'BUY' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                                                            {pos.direction}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-3 font-mono text-[var(--text-secondary)]">{pos.lot}</td>
+                                                    <td className="px-4 py-3 font-mono text-[var(--text-secondary)]">{pos.entry_price}</td>
+                                                    <td className="px-4 py-3 font-mono text-[var(--text-secondary)]">{pos.current_price || '—'}</td>
+                                                    <td className={`px-4 py-3 font-mono font-black text-sm ${isWin ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {isWin ? '+' : ''}${pnl.toFixed(2)}
+                                                    </td>
+                                                    <td className="px-4 py-3 font-mono text-[var(--text-dim)] text-[11px]">{pos.swap || 0}</td>
+                                                    <td className="px-4 py-3 font-mono text-[var(--text-dim)] text-[11px]">{pos.magic || '—'}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                                {/* Summary Row */}
+                                <div className="px-5 py-3 bg-[var(--bg-panel)] border-t border-[var(--border-color)] flex justify-between items-center">
+                                    <span className="text-[10px] text-[var(--text-dim)]">{openPositions.length} posisi terbuka</span>
+                                    <span className={`text-sm font-black font-mono ${openPositions.reduce((s, p) => s + parseFloat(p.pnl || 0), 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                        Total: {openPositions.reduce((s, p) => s + parseFloat(p.pnl || 0), 0) >= 0 ? '+' : ''}
+                                        ${openPositions.reduce((s, p) => s + parseFloat(p.pnl || 0), 0).toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-12 text-[var(--text-dim)] space-y-3">
+                                <Activity size={28} className="opacity-20" />
+                                <p className="text-xs font-black">Tidak ada posisi terbuka</p>
+                                <p className="text-[10px]">
+                                    {accountMode === 'offline'
+                                        ? 'Setup EA per-user untuk melihat posisi realtime'
+                                        : 'Semua posisi sudah ditutup — tidak ada trade aktif'}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* EA Setup Guide for this user */}
+                    {accountMode !== 'user_ea' && (
+                        <div className="bg-[var(--bg-card)] border border-[var(--accent)]/20 rounded-xl overflow-hidden">
+                            <div className="px-5 py-3 bg-[var(--accent)]/10 border-b border-[var(--accent)]/20">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--accent)]">🚀 Setup Per-User EA untuk akun kamu</p>
+                            </div>
+                            <div className="p-5 space-y-3">
+                                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                                    Pasang <strong>GAS_AccountHeartbeat.ex5</strong> di MT5 kamu, lalu isi parameter berikut:
+                                </p>
+                                <div className="bg-[var(--bg-panel)] rounded-xl p-4 font-mono text-[10px] space-y-1.5">
+                                    <div className="flex gap-2"><span className="text-[var(--text-dim)] w-24">UserID</span><span className="text-[var(--accent)]">{liveData?.user_id || '<isi user ID kamu>'}</span></div>
+                                    <div className="flex gap-2"><span className="text-[var(--text-dim)] w-24">GAS_GATEWAY</span><span className="text-yellow-400">GAS_SECURE_GATEWAY</span></div>
+                                    <div className="flex gap-2"><span className="text-[var(--text-dim)] w-24">Interval</span><span className="text-green-400">10 detik</span></div>
+                                </div>
+                                <p className="text-[10px] text-[var(--text-dim)]">
+                                    Download: <span className="text-[var(--accent)] font-bold">GAS_AccountHeartbeat.mq5</span> tersedia di Dashboard → Files
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* ══════════════════════════════════════════════
                 TAB: DASHBOARD
@@ -480,11 +780,20 @@ export default function PortfolioView({ theme = 'dark' }) {
                                     <p className="text-lg font-black text-[var(--success)] mt-0.5">+{METRICS.growthPct}% Growth</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] text-[var(--text-dim)]">Start: $10,000</p>
-                                    <p className="text-[10px] text-[var(--text-dim)]">Now: $18,410</p>
+                                    <p className="text-[10px] text-[var(--text-dim)]">Start: ${METRICS.startBalance.toLocaleString()}</p>
+                                    <p className="text-[10px] text-[var(--text-dim)]">Now: ${METRICS.balance.toLocaleString()}</p>
                                 </div>
                             </div>
-                            <EquityChart data={EQUITY_DATA} theme={theme} />
+                            {equityData.length > 1 ? (
+                                <EquityChart data={equityData} theme={theme} />
+                            ) : (
+                                <div className="flex items-center justify-center h-32 text-[var(--text-dim)]">
+                                    <div className="text-center">
+                                        <Activity size={24} className="mx-auto mb-2 opacity-20" />
+                                        <p className="text-xs font-bold">Koneksi EA MT5 untuk melihat equity curve</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Win/Loss + Asset Dist */}
@@ -512,18 +821,24 @@ export default function PortfolioView({ theme = 'dark' }) {
 
                             <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 flex-1">
                                 <p className="text-xs font-black uppercase tracking-widest text-[var(--text-dim)] mb-3">Asset Distribution</p>
-                                <div className="space-y-2">
-                                    {ASSET_DIST.map((a, i) => (
-                                        <div key={i} className="flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full shrink-0" style={{ background: a.color }} />
-                                            <span className="text-[10px] font-bold flex-1">{a.name}</span>
-                                            <div className="flex-1 h-1.5 bg-[var(--bg-panel)] rounded-full overflow-hidden">
-                                                <div className="h-full rounded-full transition-all" style={{ width: `${a.pct}%`, background: a.color }} />
+                                {assetDist.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {assetDist.map((a, i) => (
+                                            <div key={i} className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full shrink-0" style={{ background: a.color }} />
+                                                <span className="text-[10px] font-bold flex-1">{a.name}</span>
+                                                <div className="flex-1 h-1.5 bg-[var(--bg-panel)] rounded-full overflow-hidden">
+                                                    <div className="h-full rounded-full transition-all" style={{ width: `${a.pct}%`, background: a.color }} />
+                                                </div>
+                                                <span className="text-[10px] font-mono text-[var(--text-dim)] w-7 text-right">{a.pct}%</span>
                                             </div>
-                                            <span className="text-[10px] font-mono text-[var(--text-dim)] w-7 text-right">{a.pct}%</span>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center h-20 text-center">
+                                        <p className="text-[10px] text-[var(--text-dim)]">Catat trade di Journal<br/>untuk melihat distribusi aset</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -532,29 +847,46 @@ export default function PortfolioView({ theme = 'dark' }) {
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
                         <div className="xl:col-span-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5">
                             <p className="text-xs font-black uppercase tracking-widest text-[var(--text-dim)] mb-1">Daily P&L</p>
-                            <p className="text-[10px] text-[var(--text-dim)] mb-3">Januari – Maret 2026</p>
-                            <PnLChart data={DAILY_PNL} theme={theme} />
+                            <p className="text-[10px] text-[var(--text-dim)] mb-3">Data dari EA MT5</p>
+                            {dailyPnlData.length > 0 ? (
+                                <PnLChart data={dailyPnlData} theme={theme} />
+                            ) : (
+                                <div className="flex items-center justify-center h-32 text-[var(--text-dim)]">
+                                    <div className="text-center">
+                                        <BarChart2 size={24} className="mx-auto mb-2 opacity-20" />
+                                        <p className="text-xs font-bold">Koneksi EA MT5 untuk melihat Daily P&L</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5">
                             <p className="text-xs font-black uppercase tracking-widest text-[var(--text-dim)] mb-4">Monthly Returns</p>
-                            <MiniBar data={MONTHLY_RETURNS} />
-                            <div className="mt-3 space-y-1.5">
-                                {MONTHLY_RETURNS.map((m, i) => (
-                                    <div key={i} className="flex items-center justify-between text-[10px]">
-                                        <span className="text-[var(--text-dim)] font-bold w-8">{m.m}</span>
-                                        <div className="flex-1 mx-2 h-1 bg-[var(--bg-panel)] rounded-full overflow-hidden">
-                                            <div className="h-full rounded-full" style={{
-                                                width: `${Math.abs(m.v) * 7}%`,
-                                                background: m.v >= 0 ? 'var(--success)' : 'var(--danger)'
-                                            }} />
-                                        </div>
-                                        <span className={`font-black font-mono w-12 text-right ${m.v >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-                                            {m.v >= 0 ? '+' : ''}{m.v}%
-                                        </span>
+                            {monthlyReturns.length > 0 ? (
+                                <>
+                                    <MiniBar data={monthlyReturns} />
+                                    <div className="mt-3 space-y-1.5">
+                                        {monthlyReturns.map((m, i) => (
+                                            <div key={i} className="flex items-center justify-between text-[10px]">
+                                                <span className="text-[var(--text-dim)] font-bold w-8">{m.m}</span>
+                                                <div className="flex-1 mx-2 h-1 bg-[var(--bg-panel)] rounded-full overflow-hidden">
+                                                    <div className="h-full rounded-full" style={{
+                                                        width: `${Math.min(100, Math.abs(m.v) * 7)}%`,
+                                                        background: m.v >= 0 ? 'var(--success)' : 'var(--danger)'
+                                                    }} />
+                                                </div>
+                                                <span className={`font-black font-mono w-12 text-right ${m.v >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                                                    {m.v >= 0 ? '+' : ''}{m.v}%
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
+                                </>
+                            ) : (
+                                <div className="flex items-center justify-center h-32 text-center">
+                                    <p className="text-[10px] text-[var(--text-dim)]">Catat trade di Journal<br/>untuk melihat monthly returns</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -588,10 +920,10 @@ export default function PortfolioView({ theme = 'dark' }) {
                 <div className="space-y-4">
                     {/* Journal Header Stats */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <KpiCard label="Total Trades" value={JOURNAL.length} icon={BarChart2} />
-                        <KpiCard label="Total P&L" value={`+$${JOURNAL.reduce((a, t) => a + t.pnl, 0).toFixed(2)}`} up={true} icon={TrendingUp} />
-                        <KpiCard label="Best Trade" value={`+$${Math.max(...JOURNAL.map(t => t.pnl))}`} up={true} icon={Award} />
-                        <KpiCard label="Worst Trade" value={`$${Math.min(...JOURNAL.map(t => t.pnl)).toFixed(2)}`} up={false} icon={AlertTriangle} />
+                        <KpiCard label="Total Trades" value={journalForTable.length} icon={BarChart2} />
+                        <KpiCard label="Total P&L" value={journalForTable.length ? `${journalForTable.reduce((a, t) => a + t.pnl, 0) >= 0 ? '+' : ''}$${journalForTable.reduce((a, t) => a + t.pnl, 0).toFixed(2)}` : '$0'} up={journalForTable.reduce((a, t) => a + t.pnl, 0) >= 0} icon={TrendingUp} />
+                        <KpiCard label="Best Trade" value={journalForTable.length ? `+$${Math.max(...journalForTable.map(t => t.pnl)).toFixed(2)}` : '$0'} up={true} icon={Award} />
+                        <KpiCard label="Worst Trade" value={journalForTable.length ? `$${Math.min(...journalForTable.map(t => t.pnl)).toFixed(2)}` : '$0'} up={false} icon={AlertTriangle} />
                     </div>
 
                     {/* Filter Bar */}
@@ -616,7 +948,16 @@ export default function PortfolioView({ theme = 'dark' }) {
                         </button>
                     </div>
 
+                    {journalForTable.length === 0 && (
+                        <div className="text-center py-12 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl">
+                            <BookOpen size={32} className="mx-auto mb-3 opacity-20 text-[var(--text-dim)]" />
+                            <p className="text-sm font-bold text-[var(--text-dim)]">Journal masih kosong</p>
+                            <p className="text-[10px] text-[var(--text-dim)] mt-1">Buka tab Journal di sidebar untuk mencatat trade pertama kamu</p>
+                        </div>
+                    )}
+
                     {/* Journal Table */}
+                    {journalForTable.length > 0 && (
                     <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden">
                         <div className="overflow-x-auto scrollbar-none">
                             <table className="w-full text-xs min-w-[800px]">
@@ -680,12 +1021,13 @@ export default function PortfolioView({ theme = 'dark' }) {
                             </table>
                         </div>
                         <div className="px-4 py-3 border-t border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-panel)]">
-                            <span className="text-[10px] text-[var(--text-dim)]">Menampilkan {filteredJournal.length} dari {JOURNAL.length} trade</span>
+                            <span className="text-[10px] text-[var(--text-dim)]">Menampilkan {filteredJournal.length} dari {journalForTable.length} trade</span>
                             <span className={`text-sm font-black font-mono ${filteredJournal.reduce((a, t) => a + t.pnl, 0) >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
                                 Total: {filteredJournal.reduce((a, t) => a + t.pnl, 0) >= 0 ? '+' : ''}${filteredJournal.reduce((a, t) => a + t.pnl, 0).toFixed(2)}
                             </span>
                         </div>
                     </div>
+                    )}
                 </div>
             )}
 
@@ -694,66 +1036,45 @@ export default function PortfolioView({ theme = 'dark' }) {
             ══════════════════════════════════════════════ */}
             {tab === 'backtest' && (
                 <div className="space-y-5">
-                    {/* Strategy selector */}
-                    <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 flex flex-wrap items-center gap-3">
-                        <span className="text-xs font-black text-[var(--text-dim)] uppercase tracking-widest">Strategy:</span>
-                        {['GAS Trend v2.1', 'SMC Breakout', 'MA Crossover'].map((s, i) => (
-                            <button key={i} className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${i === 0 ? 'bg-[var(--accent)] text-black' : 'border border-[var(--border-color)] text-[var(--text-dim)] hover:text-[var(--text-primary)]'}`}>
-                                {s}
-                            </button>
-                        ))}
-                        <div className="flex-1" />
-                        <span className="text-[9px] font-bold text-[var(--text-dim)] bg-[var(--bg-panel)] px-2 py-1 rounded-lg border border-[var(--border-color)]">
-                            Jan 2023 – Mar 2026 · XAUUSD M15
-                        </span>
-                    </div>
-
-                    {/* Backtest KPIs */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3">
-                        {[
-                            { label: 'Total Trades', value: '1,847', icon: BarChart2 },
-                            { label: 'Win Rate', value: '71.3%', up: true, icon: Percent },
-                            { label: 'Profit Factor', value: '2.71', up: true, icon: Award },
-                            { label: 'Net Profit', value: '+842%', up: true, icon: TrendingUp },
-                            { label: 'Max DD', value: '-8.4%', up: false, icon: AlertTriangle },
-                            { label: 'Sharpe', value: '1.98', icon: Activity },
-                            { label: 'Avg R:R', value: '1.76', icon: Target },
-                            { label: 'Best Month', value: '+18.2%', up: true, icon: Calendar },
-                        ].map((k, i) => <KpiCard key={i} {...k} />)}
-                    </div>
-
-                    {/* Equity Curve (backtest) */}
-                    <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <p className="text-xs font-black uppercase tracking-widest text-[var(--text-dim)]">Backtest Equity Curve</p>
-                                <p className="text-sm text-[var(--text-dim)] mt-0.5">GAS Trend v2.1 · $10,000 initial capital</p>
-                            </div>
-                            <span className="text-xl font-black text-[var(--success)]">+842%</span>
+                    {/* Redirect to AI Backtesting feature */}
+                    <div className="bg-[var(--bg-card)] border border-[var(--accent)]/20 rounded-xl p-6 text-center space-y-4">
+                        <div className="w-12 h-12 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center mx-auto">
+                            <Activity size={22} className="text-[var(--accent)]" />
                         </div>
-                        <EquityChart data={EQUITY_DATA.map((d, i) => ({ ...d, value: 10000 + i * 44 + Math.sin(i / 8) * 500 }))} theme={theme} />
+                        <div>
+                            <h3 className="text-base font-black text-[var(--text-primary)]">AI Backtesting</h3>
+                            <p className="text-xs text-[var(--text-dim)] mt-1 max-w-md mx-auto">
+                                Gunakan fitur AI Backtesting di sidebar untuk menjalankan backtest real dengan data MT5 — hasil statistik aktual, equity curve, dan monthly returns akan muncul di sini.
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-3 text-[10px] text-[var(--text-dim)]">
+                            {['Total Trades', 'Win Rate', 'Profit Factor', 'Max DD', 'Sharpe', 'Avg R:R'].map(s => (
+                                <span key={s} className="px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-panel)] font-bold">{s}: —</span>
+                            ))}
+                        </div>
+                        <p className="text-[10px] text-[var(--accent)] font-bold">Buka menu AI → Backtesting untuk menjalankan backtest · 20 cr</p>
                     </div>
 
-                    {/* Monthly Returns Table */}
+                    {/* Placeholder sections (will show real data after BacktestView is run) */}
+                    <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5">
+                        <p className="text-xs font-black uppercase tracking-widest text-[var(--text-dim)] mb-4">Equity Curve</p>
+                        <div className="flex items-center justify-center h-32 text-[var(--text-dim)]">
+                            <div className="text-center">
+                                <BarChart2 size={24} className="mx-auto mb-2 opacity-20" />
+                                <p className="text-xs font-bold">Jalankan AI Backtesting untuk melihat equity curve</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden">
                         <div className="px-5 py-3 border-b border-[var(--border-color)] bg-[var(--bg-panel)]">
                             <span className="text-xs font-black uppercase tracking-widest text-[var(--text-dim)]">Monthly Backtest Returns</span>
                         </div>
-                        <div className="p-5 grid grid-cols-4 sm:grid-cols-6 xl:grid-cols-12 gap-2">
-                            {Array.from({ length: 36 }, (_, i) => {
-                                const v = parseFloat(((Math.random() - 0.28) * 14).toFixed(1));
-                                const d = new Date('2023-01-01'); d.setMonth(d.getMonth() + i);
-                                return { label: d.toLocaleString('default', { month: 'short' }) + " '" + String(d.getFullYear()).slice(2), v };
-                            }).map((m, i) => (
-                                <div key={i} className={`rounded-lg p-2 text-center border ${m.v >= 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
-                                    <p className={`text-[9px] font-black ${m.v >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-                                        {m.v >= 0 ? '+' : ''}{m.v}%
-                                    </p>
-                                    <p className="text-[8px] text-[var(--text-dim)] mt-0.5">{m.label}</p>
-                                </div>
-                            ))}
+                        <div className="flex items-center justify-center py-12 text-[var(--text-dim)]">
+                            <p className="text-xs font-bold">Belum ada data backtest</p>
                         </div>
                     </div>
+
                 </div>
             )}
 
@@ -808,25 +1129,16 @@ export default function PortfolioView({ theme = 'dark' }) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {[
                                 'Cek economic calendar hari ini',
-                                'Review signal GAS PRO terbaru',
+                                'Review signal Golden AI Strategy terbaru',
                                 'Hitung lot size berdasarkan balance',
                                 'Set SL/TP sebelum entry',
                                 'Cek sentimen market (Risk On/Off)',
                                 'Tidak trading kalau mood negatif',
                                 'Max 3 posisi terbuka sekaligus',
                                 'Stop jika DD harian sudah -2%',
-                            ].map((item, i) => {
-                                const [checked, setChecked] = useState(false);
-                                return (
-                                    <label key={i} className="flex items-center gap-2.5 cursor-pointer group">
-                                        <div onClick={() => setChecked(p => !p)}
-                                            className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all shrink-0 ${checked ? 'bg-[var(--success)] border-[var(--success)]' : 'border-[var(--border-color)] group-hover:border-[var(--text-dim)]'}`}>
-                                            {checked && <Check size={10} className="text-white" />}
-                                        </div>
-                                        <span className={`text-xs transition-all ${checked ? 'line-through text-[var(--text-dim)]' : 'text-[var(--text-secondary)]'}`}>{item}</span>
-                                    </label>
-                                );
-                            })}
+                            ].map((item, i) => (
+                                <ChecklistItem key={i} label={item} />
+                            ))}
                         </div>
                     </div>
                 </div>

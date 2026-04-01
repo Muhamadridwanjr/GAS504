@@ -69,7 +69,7 @@ export default function TradingViewChart({ pair, currentPrice, theme, timeframe 
                     horzAlign: 'center',
                     vertAlign: 'center',
                     color: colors.watermark,
-                    text: 'GASSTRATEGYAI',
+                    text: 'GOLDEN AI STRATEGY',
                 },
                 handleScroll: true,
                 handleScale: true,

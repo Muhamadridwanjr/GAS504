@@ -1,3 +1,10 @@
+"""
+EcoCal worker — fetches economic calendar from FXStreet via ecocal library.
+
+Filter policy (saves bandwidth + DB space):
+  - Countries / currencies : USD EUR JPY GBP CNY CHF AUD CAD NZD
+  - Impact                 : high, medium  (low is discarded)
+"""
 from datetime import datetime
 import pandas as pd
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,77 +13,136 @@ from src.lib.logger import get_logger
 
 logger = get_logger(__name__)
 
+# ── Filters applied before DB insert ─────────────────────────────────────────
+_PRIORITY_CURRENCIES = {"USD", "EUR", "JPY", "GBP", "CNY", "CHF", "AUD", "CAD", "NZD"}
+_PRIORITY_IMPACTS    = {"high", "medium"}
+
+
+def _parse_importance(raw) -> str:
+    """Normalise impact to lowercase string."""
+    return str(raw or "low").strip().lower()
+
+
+def _parse_time(time_val) -> datetime:
+    """Parse ecocal datetime value to a Python datetime."""
+    if pd.isnull(time_val):
+        return datetime.utcnow()
+    if isinstance(time_val, str):
+        try:
+            if "/" in time_val:
+                return datetime.strptime(time_val, "%m/%d/%Y %H:%M:%S")
+            return datetime.fromisoformat(time_val.replace("Z", "+00:00"))
+        except Exception:
+            return datetime.utcnow()
+    if isinstance(time_val, datetime):
+        return time_val
+    return datetime.utcnow()
+
+
+def _safe_float(val) -> float | None:
+    """Convert to float, return None if not parseable."""
+    try:
+        s = str(val).replace(",", "")
+        if s.replace(".", "", 1).lstrip("-").isdigit():
+            return float(s)
+    except Exception:
+        pass
+    return None
+
+
 async def fetch_calendar_events(db: AsyncSession, start_date=None, end_date=None):
-    """Fetch events using ecocal and persist to DB with exact mapping."""
+    """
+    Fetch and persist calendar events from FXStreet via ecocal.
+
+    Only HIGH and MEDIUM impact events for major economies are saved.
+    LOW impact events are silently discarded.
+    """
     try:
         from ecocal import Calendar
-        logger.info("Starting refined ecocal ingestion: %s to %s", start_date, end_date)
-        
-        # We use 1 thread to be extremely careful with fxstreet rate limits
-        ec = Calendar(
-            startHorizon=start_date, 
-            endHorizon=end_date, 
-            withDetails=True, 
-            nbThreads=1, 
-            preBuildCalendar=True
+        logger.info(
+            "[ecocal] Fetching calendar %s → %s (filter: %s | high/medium only)",
+            start_date, end_date, ", ".join(sorted(_PRIORITY_CURRENCIES)),
         )
-        
-        # Use detailedCalendar if available, otherwise fallback to simple calendar
+
+        # Default to today → +7 days if no range given
+        if not start_date:
+            from datetime import date, timedelta
+            start_date = date.today().strftime("%Y-%m-%d")
+        if not end_date:
+            from datetime import date, timedelta
+            end_date = (date.today() + timedelta(days=7)).strftime("%Y-%m-%d")
+
+        ec = Calendar(
+            startHorizon=start_date,
+            endHorizon=end_date,
+            withDetails=False,     # False = fast (no per-event detail scrape)
+            withProgressBar=False,
+            nbThreads=20,
+            preBuildCalendar=True,
+        )
+
+        # Prefer detailedCalendar, fall back to calendar
         df = None
-        if hasattr(ec, 'detailedCalendar') and ec.detailedCalendar is not None and len(ec.detailedCalendar) > 0:
+        if hasattr(ec, "detailedCalendar") and ec.detailedCalendar is not None and len(ec.detailedCalendar) > 0:
             df = ec.detailedCalendar
-            logger.info("Using detailedCalendar with %d rows", len(df))
-        elif hasattr(ec, 'calendar') and ec.calendar is not None and len(ec.calendar) > 0:
+            logger.info("[ecocal] Using detailedCalendar — %d raw rows", len(df))
+        elif hasattr(ec, "calendar") and ec.calendar is not None and len(ec.calendar) > 0:
             df = ec.calendar
-            logger.info("Using basic calendar with %d rows (details not available)", len(df))
-        
+            logger.info("[ecocal] Using basic calendar — %d raw rows", len(df))
+
         if df is None or len(df) == 0:
-            logger.warning("No data found even after successful ecocal execution")
+            logger.warning("[ecocal] No data returned from ecocal.")
             return []
 
-        count = 0
+        count_raw    = len(df)
+        count_saved  = 0
+        count_skip_ccy    = 0
+        count_skip_impact = 0
+
         for _, row in df.iterrows():
             try:
-                # Exact mapping from ecocal Detailed DataFrame
-                title = row.get('Name') or row.get('name') or row.get('Title') or 'Unknown'
-                country = row.get('Currency') or row.get('countryCode') or 'GLOBAL'
-                importance = str(row.get('Impact') or row.get('Importance') or 'low').lower()
-                
-                # Time parsing
-                time_val = row.get('dateUtc') or row.get('Date') or row.get('Start')
-                if pd.notnull(time_val):
-                    if isinstance(time_val, str):
-                        try:
-                            # Handle formats like "03/07/2026 08:00:00" or ISO
-                            if '/' in time_val:
-                                time_val = datetime.strptime(time_val, "%m/%d/%Y %H:%M:%S")
-                            else:
-                                time_val = datetime.fromisoformat(time_val.replace('Z', '+00:00'))
-                        except:
-                            time_val = datetime.utcnow()
-                else:
-                    time_val = datetime.utcnow()
+                title      = str(row.get("Name") or row.get("name") or row.get("Title") or "Unknown")
+                country    = str(row.get("Currency") or row.get("countryCode") or "GLOBAL").upper().strip()
+                importance = _parse_importance(row.get("Impact") or row.get("Importance"))
 
-                new_event = EconomicEvent(
-                    provider="ecocal_detailed",
-                    title=str(title),
-                    country=str(country),
-                    importance=importance,
-                    time_utc=time_val,
-                    actual_value=float(row.get('actual')) if pd.notnull(row.get('actual')) and str(row.get('actual')).replace('.','',1).isdigit() else None,
-                    forecast_value=float(row.get('consensus')) if pd.notnull(row.get('consensus')) and str(row.get('consensus')).replace('.','',1).isdigit() else None,
-                    previous_value=float(row.get('previous')) if pd.notnull(row.get('previous')) and str(row.get('previous')).replace('.','',1).isdigit() else None,
-                    unit=str(row.get('unit') or '')
+                # ── Filter 1: major economies only ─────────────────────────
+                if country not in _PRIORITY_CURRENCIES:
+                    count_skip_ccy += 1
+                    continue
+
+                # ── Filter 2: HIGH / MEDIUM impact only ────────────────────
+                if importance not in _PRIORITY_IMPACTS:
+                    count_skip_impact += 1
+                    continue
+
+                time_val = _parse_time(
+                    row.get("dateUtc") or row.get("Date") or row.get("Start")
                 )
-                db.add(new_event)
-                count += 1
+
+                event = EconomicEvent(
+                    provider       = "ecocal",
+                    title          = title,
+                    country        = country,
+                    importance     = importance,
+                    time_utc       = time_val,
+                    actual_value   = _safe_float(row.get("actual")),
+                    forecast_value = _safe_float(row.get("consensus")),
+                    previous_value = _safe_float(row.get("previous")),
+                    unit           = str(row.get("unit") or ""),
+                )
+                db.add(event)
+                count_saved += 1
+
             except Exception as ex:
-                logger.debug("Row mapping error: %s", ex)
-        
+                logger.debug("[ecocal] Row mapping error: %s", ex)
+
         await db.commit()
-        logger.info("Final persistence: %d rows saved", count)
-        return [{"title": "Ingested", "count": count}]
-        
+        logger.info(
+            "[ecocal] Done — %d raw rows | %d saved | %d skipped (minor ccy) | %d skipped (low impact)",
+            count_raw, count_saved, count_skip_ccy, count_skip_impact,
+        )
+        return [{"title": "Ingested", "count": count_saved}]
+
     except Exception as e:
-        logger.error("Critical ecocal worker error: %s", e)
+        logger.error("[ecocal] Critical error: %s", e)
         return []

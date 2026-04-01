@@ -1,0 +1,55 @@
+name: gas_mobile
+description: GAS - Golden AI Strategy Trading Platform
+publish_to: 'none'
+version: 2.0.0+2
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Navigation
+  go_router: ^14.2.0
+
+  # State Management
+  flutter_riverpod: ^2.5.0
+
+  # HTTP
+  dio: ^5.4.0
+
+  # WebSocket
+  web_socket_channel: ^3.0.0
+
+  # Local Storage
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.2
+
+  # Charts
+  fl_chart: ^0.68.0
+
+  # UI
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.0
+  shimmer: ^3.0.0
+  percent_indicator: ^4.2.3
+  flutter_animate: ^4.5.0
+
+  # WebView
+  webview_flutter: ^4.9.0
+
+  # Utils
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+    - assets/images/

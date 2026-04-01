@@ -40,3 +40,16 @@ async def get_calendar(
     if isinstance(data, dict) and "error" in data:
         return {"total": 0, "data": []}
     return {"total": 0, "data": []}
+
+
+@router.get("/terminal/calendar/analysis")
+async def get_calendar_analysis():
+    """Proxy AI calendar analysis from gas-calendar-news-service."""
+    headers = {"X-Internal-Key": "gas-internal-secret-key"}
+    data = await fetch_json(
+        f"{settings.CALENDAR_NEWS_URL}/analysis",
+        headers=headers,
+    )
+    if isinstance(data, dict) and data.get("status") == "ok":
+        return data
+    return {"status": "no_data", "data": {}}

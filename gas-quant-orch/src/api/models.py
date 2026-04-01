@@ -5,7 +5,7 @@ class AnalyzeRequest(BaseModel):
     symbol: str
     timeframe: str = "H1"
     features: Optional[Dict[str, Any]] = None
-    engines: Optional[List[str]] = ["regime", "pattern", "statarb"]
+    engines: Optional[List[str]] = ["regime", "pattern", "statarb", "trend", "phase", "orderflow"]
 
 class AnalyzeResponse(BaseModel):
     symbol: str
@@ -14,6 +14,8 @@ class AnalyzeResponse(BaseModel):
     confidence: float
     score: float
     details: Dict[str, Any]
+    regime_used: Optional[str] = None
+    engines_run: Optional[List[str]] = None
 
 class BatchAnalyzeRequest(BaseModel):
     requests: List[AnalyzeRequest]
@@ -26,7 +28,7 @@ class GASSignalRequest(BaseModel):
     market: Optional[Dict[str, Any]] = None   # bid, ask, spread, atr_14_m15
     session: str = "OFF"                       # LONDON, NEW_YORK, OFF
     context: Optional[Dict[str, Any]] = None  # balance, daily_pnl, consecutive_loss, etc.
-    engines: Optional[List[str]] = ["regime", "pattern", "statarb"]
+    engines: Optional[List[str]] = ["regime", "pattern", "statarb", "trend", "phase", "orderflow"]
 
 class GASSignalResponse(BaseModel):
     signal_id: str

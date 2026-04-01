@@ -18,7 +18,11 @@ ENV DISPLAY=:99
 ENV MOZ_HEADLESS=1
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && mkdir -p /usr/local/lib/python3.11/site-packages/tedata/logs \
+    && chmod -R 777 /usr/local/lib/python3.11/site-packages/tedata/
+
+ENV TEDATA_DISABLE_LOGGING=true
 
 COPY . .
 RUN useradd -m appuser && chown -R appuser:appuser /app

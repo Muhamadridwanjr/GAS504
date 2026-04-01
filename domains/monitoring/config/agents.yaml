@@ -1,0 +1,73 @@
+domain: monitoring
+version: "1.0"
+description: "Platform-wide system health, alert management, notification delivery, and log aggregation"
+agents:
+  - name: system_health_agent
+    file: agents/system_health_agent.md
+    enabled: true
+    schedule: "*/30 * * * * *"
+    priority: 1
+    dependencies: []
+    triggers:
+      - type: schedule
+        value: "*/30 * * * * *"
+      - type: schedule
+        value: "30 23 * * *"
+      - type: event
+        value: "service_restarted"
+      - type: event
+        value: "deployment_completed"
+      - type: webhook
+        value: "/agents/system-health/check"
+
+  - name: alerting_agent
+    file: agents/alerting_agent.md
+    enabled: true
+    schedule: "*/30 * * * * *"
+    priority: 1
+    dependencies:
+      - system_health_agent
+    triggers:
+      - type: schedule
+        value: "*/30 * * * * *"
+      - type: event
+        value: "system_health_report"
+      - type: event
+        value: "maintenance_window_started"
+      - type: webhook
+        value: "/agents/alerting/silence"
+
+  - name: notification_dispatcher_agent
+    file: agents/notification_dispatcher_agent.md
+    enabled: true
+    schedule: "*/10 * * * * *"
+    priority: 2
+    dependencies:
+      - alerting_agent
+    triggers:
+      - type: schedule
+        value: "*/10 * * * * *"
+      - type: event
+        value: "alert_firing"
+      - type: schedule
+        value: "0 * * * *"
+      - type: webhook
+        value: "/agents/notification-dispatcher/send"
+
+  - name: log_aggregation_agent
+    file: agents/log_aggregation_agent.md
+    enabled: true
+    schedule: "*/30 * * * * *"
+    priority: 2
+    dependencies: []
+    triggers:
+      - type: schedule
+        value: "*/30 * * * * *"
+      - type: event
+        value: "service_critical"
+      - type: event
+        value: "incident_detected"
+      - type: schedule
+        value: "0 3 * * *"
+      - type: webhook
+        value: "/agents/log-aggregation/search"

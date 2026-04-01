@@ -27,13 +27,47 @@ services:
   # ────────────────────────────────────────────────────────
   # INFRASTRUCTURE
   # ────────────────────────────────────────────────────────
+  # Cold Redis — persists critical data: credits, plans, reservations, sessions
+  # AOF + RDB ensures data survives container restarts / crashes
   gas-redis:
     image: redis:7-alpine
     container_name: gas-redis
     <<: *common
     ports:
       - "127.0.0.1:6379:6379"
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --save 60 1
+      --save 300 10
+      --dir /data
+    volumes:
+      - gas-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Hot Redis — ephemeral tick/OHLC data from MT5 EA
+  # No AOF: tick data is re-populated by the EA on reconnect.
+  # Saves ~50MB/day of disk writes. Uses DB 1 on same port to avoid
+  # extra env-var changes, but a separate container provides memory isolation.
+  gas-redis-hot:
+    image: redis:7-alpine
+    container_name: gas-redis-hot
+    <<: *common
+    ports:
+      - "127.0.0.1:6380:6379"
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly no
+      --save ""
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -71,6 +105,13 @@ services:
     env_file: ./gas-auth-service/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_user_db
+      BREVO_SMTP_HOST: smtp-relay.brevo.com
+      BREVO_SMTP_PORT: "587"
+      BREVO_SMTP_USER: a4f504001@smtp-brevo.com
+      BREVO_SMTP_PASS: xsmtpsib-13d6cd17e0e3dfab1c1774d1768b87cd21a7a74b9f318d116be977b7ac1a3ee6-Cnp0W2QPJQOPqWGi
+      FROM_EMAIL: billing@gasstrategyai.xyz
+      SITE_URL: https://www.gasstrategyai.xyz
+      INTERNAL_API_KEY: "gas-internal-key-2026"
     depends_on:
       gas-user-db:
         condition: service_healthy
@@ -85,8 +126,8 @@ services:
     build: ./gas-gateway-api
     container_name: gas-gateway-api
     <<: *common
-    ports:
-      - "8000:8000"
+    # ports:
+    #   - "8000:8000"
     env_file: ./gas-gateway-api/.env
     environment:
       REDIS_HOST: gas-redis
@@ -116,6 +157,13 @@ services:
       QUANT_ORCH_URL: http://gas-quant-orch:9500
       JOURNAL_URL: http://gas-journal-service:8107
       REALTIME_HUB_URL: http://gas-realtime-hub:8111
+      STRATEGY_CORE_URL: http://gas-strategy-core:7003
+      BINANCE_SERVICE_URL: http://gas-binance-service:9612
+      POLYMARKET_SERVICE_URL: http://gas-polymarket-service:9613
+      MEMECOIN_SERVICE_URL: http://gas-memecoin-service:9614
+      IDX_SERVICE_URL: http://gas-idx-service:9615
+    volumes:
+      - ./gas-terminal-backend/data:/app/data
     depends_on:
       gas-redis:
         condition: service_healthy
@@ -133,9 +181,11 @@ services:
     ports:
       - "8110:8110"
     environment:
-      REDIS_URL: redis://gas-redis:6379/0
+      # Ticks written to hot Redis (no persistence) — EA re-populates on reconnect
+      REDIS_URL: redis://gas-redis-hot:6379/0
+      REDIS_HOT_URL: redis://gas-redis-hot:6379/0
     depends_on:
-      gas-redis:
+      gas-redis-hot:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8110/health"]
@@ -261,7 +311,7 @@ services:
       REDIS_URL: redis://gas-redis:6379/0
       MT5_DATA_SERVICE_URL: http://gas-mt5-data-service:8100
       INDICATOR_ENGINE_URL: http://gas-indicator-engine:8203
-      SMC_ENGINE_URL: http://gas-smc-engine:8006
+      SMC_ENGINE_URL: http://gas-smc-engine:8000
     depends_on:
       gas-redis:
         condition: service_healthy
@@ -287,6 +337,386 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
       <<: *hc-curl
 
+  gas-user-service:
+    build: ./gas-user-service
+    container_name: gas-user-service
+    <<: *common
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_user_db
+      REDIS_URL: redis://gas-redis:6379/0
+
+  gas-billing-service:
+    build: ./gas-billing-service
+    container_name: gas-billing-service
+    <<: *common
+    ports:
+      - "8004:8004"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_signals
+      REDIS_URL: redis://gas-redis:6379/0
+
+  gas-regime-detector:
+    build: ./gas-regime-detector
+    container_name: gas-regime-detector
+    <<: *common
+    ports:
+      - "9503:9503"
+
+  gas-pattern-detector:
+    build: ./gas-pattern-detector
+    container_name: gas-pattern-detector
+    <<: *common
+    ports:
+      - "9501:9501"
+
+  gas-statarb-engine:
+    build: ./gas-statarb-engine
+    container_name: gas-statarb-engine
+    <<: *common
+    ports:
+      - "9502:9502"
+
+  gas-indicator-engine:
+    build: ./gas-indicator-engine
+    container_name: gas-indicator-engine
+    <<: *common
+    ports:
+      - "8203:8203"
+
+  gas-smc-engine:
+    build: ./gas-smc-engine
+    container_name: gas-smc-engine
+    <<: *common
+    ports:
+      - "8006:8000"
+    environment:
+      APP_PORT: "8000"
+      DEFAULT_TRADING_STYLE: "intraday"
+      MTF_ENABLED: "true"
+      LOG_LEVEL: "INFO"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      <<: *hc-curl
+
+  gas-alert-engine:
+    build: ./gas-alert-engine
+    container_name: gas-alert-engine
+    <<: *common
+    ports:
+      - "8400:8400"
+
+  gas-ai-orchestrator:
+    build: ./gas-ai-orchestrator
+    container_name: gas-ai-orchestrator
+    <<: *common
+    env_file: ./gas-ai-orchestrator/.env
+    ports:
+      - "9003:9003"
+
+  gas-rag-macro:
+    build: ./gas-rag-macro
+    container_name: gas-rag-macro
+    <<: *common
+    ports:
+      - "9002:9002"
+
+  gas-rag-technical:
+    build: ./gas-rag-technical
+    container_name: gas-rag-technical
+    <<: *common
+    ports:
+      - "9001:9001"
+
+  gas-social-service:
+    build: ./gas-social-service
+    container_name: gas-social-service
+    <<: *common
+    ports:
+      - "8500:8500"
+
+  gas-telegram-bot:
+    build: ./gas-telegram-bot
+    container_name: gas-telegram-bot
+    <<: *common
+    env_file: ./gas-telegram-bot/.env
+    environment:
+      REDIS_URL: redis://gas-redis:6379/0
+      WEB_BACKEND_URL: http://gas-web-backend:8005
+      BOT_API_KEY: gas-bot-key-2026-secret
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+
+  gas-screener-service:
+    build: ./gas-screener-service
+    container_name: gas-screener-service
+    <<: *common
+    ports:
+      - "9600:9600"
+
+  gas-calendar-news-service:
+    build: ./gas-calendar-news-service
+    container_name: gas-calendar-news-service
+    <<: *common
+    ports:
+      - "9601:9601"
+    env_file: ./gas-calendar-news-service/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_calendar
+      REDIS_URL: redis://gas-redis:6379
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+      gas-user-db:
+        condition: service_healthy
+    mem_limit: 512m
+    memswap_limit: 512m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9601/health"]
+      <<: *hc-curl
+
+  gas-tradingplan-service:
+    build: ./gas-tradingplan-service
+    container_name: gas-tradingplan-service
+    <<: *common
+    ports:
+      - "9602:9602"
+
+  gas-fundamental-data-service:
+    build: ./gas-fundamental-data-service
+    container_name: gas-fundamental-data-service
+    <<: *common
+    ports:
+      - "9603:9603"
+    env_file: ./gas-fundamental-data-service/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@gas-user-db:5432/gas_fundamental
+      REDIS_URL: redis://gas-redis:6379
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+      gas-user-db:
+        condition: service_healthy
+    mem_limit: 2500m
+    memswap_limit: 2500m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9603/health"]
+      <<: *hc-curl
+
+  gas-data-ingestor:
+    build: ./gas-data-ingestor
+    container_name: gas-data-ingestor
+    <<: *common
+    ports:
+      - "9604:9604"
+
+  gas-risk-engine:
+    build: ./gas-risk-engine
+    container_name: gas-risk-engine
+    <<: *common
+    ports:
+      - "9511:9511"
+
+  gas-correlation:
+    build: ./gas-correlation
+    container_name: gas-correlation
+    <<: *common
+    ports:
+      - "9512:9512"
+
+  gas-trend-engine:
+    build: ./gas-trend-engine
+    container_name: gas-trend-engine
+    <<: *common
+    ports:
+      - "9513:9513"
+
+  gas-orderflow:
+    build: ./gas-orderflow
+    container_name: gas-orderflow
+    <<: *common
+    ports:
+      - "9514:9514"
+
+  gas-market-phase:
+    build: ./gas-market-phase
+    container_name: gas-market-phase
+    <<: *common
+    ports:
+      - "9510:9510"
+
+  gas-quant-backtester:
+    build: ./gas-quant-backtester
+    container_name: gas-quant-backtester
+    <<: *common
+    ports:
+      - "9504:9504"
+
+  gas-vector-db:
+    build: ./gas-vector-db
+    container_name: gas-vector-db
+    <<: *common
+    ports:
+      - "9004:9004"
+
+  gas-web-backend:
+    build: ./gas-web-backend
+    container_name: gas-web-backend
+    <<: *common
+    ports:
+      - "8005:8005"
+    environment:
+      STRATEGY_CORE_URL: http://gas-strategy-core:7003
+      REDIS_URL: redis://gas-redis:6379/0
+      CRYPTOMUS_MERCHANT_ID: fad2fc23-2178-428d-bbf8-bab5aacc266f
+      CRYPTOMUS_API_KEY: e1adb3c1440eb80775853f2b4c22b0aa9f9a421d
+      SITE_URL: https://www.gasstrategyai.xyz
+      JWT_SECRET: dummy-jwt-secret
+      BREVO_SMTP_HOST: smtp-relay.brevo.com
+      BREVO_SMTP_PORT: "587"
+      BREVO_SMTP_USER: a4f504001@smtp-brevo.com
+      BREVO_SMTP_PASS: xsmtpsib-13d6cd17e0e3dfab1c1774d1768b87cd21a7a74b9f318d116be977b7ac1a3ee6-Cnp0W2QPJQOPqWGi
+      FROM_EMAIL: billing@gasstrategyai.xyz
+      ETHERSCAN_API_KEY: QQXE85JN3C1B6YIPBWRQNS5FK7GCMH2IKE
+      ERC20_WALLET: "0xf8ef68F41B609B06210ebe7d045FA111F2034518"
+      BOT_API_KEY: gas-bot-key-2026-secret
+      KIMI_API_KEY_SUPPORT: "sk-oqNrlbAvX2K0027o31RaokOZtbAdX2oyIepS2ixCClrLyH10"
+      KIMI_API_KEY_ANALYSIS: "sk-4wPbTf8cQzNx6yc1t5FjzFkiUUMLOJ9IAYwX8HJstpAjoVYN"
+      INTERNAL_API_KEY: "gas-internal-key-2026"
+      AUTH_SERVICE_URL: "http://gas-auth-service:8001"
+      MEMECOIN_SERVICE_URL: http://gas-memecoin-service:9614
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+
+  gas-notification-service:
+    build: ./gas-notification-service
+    container_name: gas-notification-service
+    <<: *common
+    ports:
+      - "8112:8112"
+
+  gas-engine-orchestrator:
+    build: ./gas-engine-orchestrator
+    container_name: gas-engine-orchestrator
+    <<: *common
+    ports:
+      - "8105:8105"
+
+  gas-feature-engine:
+    build: ./gas-feature-engine
+    container_name: gas-feature-engine
+    <<: *common
+    ports:
+      - "9499:9499"
+
+  gas-strategy-core:
+    build: ./gas-strategy-core
+    container_name: gas-strategy-core
+    <<: *common
+    ports:
+      - "7003:7003"
+    env_file: ./gas-strategy-core/.env
+    environment:
+      # Cold Redis: credits, sessions, analysis cache
+      REDIS_URL: redis://gas-redis:6379/0
+      # Hot Redis: MT5 OHLC tick data (ephemeral, no AOF)
+      REDIS_HOT_URL: redis://gas-redis-hot:6379/0
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-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}
+      OPENROUTER_MODEL: deepseek/deepseek-chat
+      KIMI_API_KEY_ANALYSIS: "sk-4wPbTf8cQzNx6yc1t5FjzFkiUUMLOJ9IAYwX8HJstpAjoVYN"
+      BINANCE_SERVICE_URL: http://gas-binance-service:9612
+      SMC_ENGINE_URL: http://gas-smc-engine:8000
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+      gas-redis-hot:
+        condition: service_healthy
+
+  gas-market-data-processor:
+    build: ./gas-market-data-processor
+    container_name: gas-market-data-processor
+    <<: *common
+    ports:
+      - "8010:8010"
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 11: BINANCE SERVICE (real-time stream & historical)
+  # ────────────────────────────────────────────────────────
+  gas-binance-service:
+    build: ./gas-binance-service
+    container_name: gas-binance-service
+    <<: *common
+    ports:
+      - "9612:9612"
+    environment:
+      REDIS_URL: redis://gas-redis:6379/0
+      MARKET_DATA_PROCESSOR_URL: http://gas-market-data-processor:8010
+      REALTIME_HUB_URL: http://gas-realtime-hub:8111
+      ENVIRONMENT: development
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9612/health')"]
+      <<: *hc-curl
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 12: POLYMARKET SERVICE (prediction markets)
+  # ────────────────────────────────────────────────────────
+  gas-polymarket-service:
+    build: ./gas-polymarket-service
+    container_name: gas-polymarket-service
+    restart: unless-stopped
+    ports:
+      - "9613:9613"
+    environment:
+      REDIS_URL: redis://gas-redis:6379/0
+      STRATEGY_CORE_URL: http://gas-strategy-core:7003
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    networks:
+      - gas-network
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 13: MEMECOIN SERVICE (AI Signal Engine – port 9614)
+  # ────────────────────────────────────────────────────────
+  gas-memecoin-service:
+    build: ./gas-memecoin-service
+    container_name: gas-memecoin-service
+    restart: unless-stopped
+    ports:
+      - "9614:9614"
+    environment:
+      REDIS_URL: redis://gas-redis:6379/0
+      STRATEGY_CORE_URL: http://gas-strategy-core:7003
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    networks:
+      - gas-network
+
+  # ────────────────────────────────────────────────────────
+  # LAYER 14: IDX SERVICE (Stock Indonesia – port 9615)
+  # ────────────────────────────────────────────────────────
+  gas-idx-service:
+    build: ./gas-idx-service
+    container_name: gas-idx-service
+    restart: unless-stopped
+    ports:
+      - "9615:9615"
+    environment:
+      REDIS_URL: redis://gas-redis:6379/0
+      SMC_ENGINE_URL: http://gas-smc-engine:8000
+    depends_on:
+      gas-redis:
+        condition: service_healthy
+    networks:
+      - gas-network
+
   # ────────────────────────────────────────────────────────
   # FRONTEND (terminal.gasstrategy.io)
   # ────────────────────────────────────────────────────────
@@ -294,16 +724,62 @@ services:
     build: ./gas-terminal-frontend
     container_name: gas-terminal-frontend
     <<: *common
-    ports:
-      - "3000:3000"
     depends_on:
       - gas-gateway-api
       - gas-terminal-backend
       - gas-auth-service
+      - gas-user-service
+      - gas-billing-service
+
+  # ────────────────────────────────────────────────────────
+  # EDGE PROXY (Domain + SSL)
+  # ────────────────────────────────────────────────────────
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    <<: *common
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+      - ./nginx-proxy/html:/usr/share/nginx/html:ro
+    depends_on:
+      - gas-terminal-frontend
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    <<: *common
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+  mt5-exness:
+    image: gmag11/metatrader5_vnc:latest
+    container_name: mt5-exness
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+      - "8101:8001"
+    volumes:
+      - mt5_exness_data:/config
+    environment:
+      - CUSTOM_USER=gas
+      - PASSWORD=gas123
+    networks:
+      - gas-network
 
 volumes:
   gas-pgdata:
     name: gas-pgdata
+  mt5_exness_data:
+    name: mt5_exness_data
+  gas-redis-data:
+    name: gas-redis-data
 
 networks:
   gas-network:

@@ -1,0 +1,71 @@
+domain: platform
+version: "1.0"
+description: "API gateway health, session management, user activity tracking, and frontend UI health monitoring"
+agents:
+  - name: api_gateway_health_agent
+    file: agents/api_gateway_health_agent.md
+    enabled: true
+    schedule: "*/30 * * * * *"
+    priority: 1
+    dependencies: []
+    triggers:
+      - type: schedule
+        value: "*/30 * * * * *"
+      - type: event
+        value: "service_restarted"
+      - type: event
+        value: "deployment_completed"
+      - type: webhook
+        value: "/agents/api-gateway-health/check"
+
+  - name: session_management_agent
+    file: agents/session_management_agent.md
+    enabled: true
+    schedule: "*/5 * * * *"
+    priority: 2
+    dependencies:
+      - api_gateway_health_agent
+    triggers:
+      - type: schedule
+        value: "*/5 * * * *"
+      - type: schedule
+        value: "0 * * * *"
+      - type: event
+        value: "user_login"
+      - type: event
+        value: "suspicious_activity_detected"
+      - type: webhook
+        value: "/agents/session-management/revoke"
+
+  - name: user_activity_agent
+    file: agents/user_activity_agent.md
+    enabled: true
+    schedule: "0 */4 * * *"
+    priority: 3
+    dependencies: []
+    triggers:
+      - type: schedule
+        value: "0 */4 * * *"
+      - type: event
+        value: "user_login"
+      - type: event
+        value: "ai_feature_used"
+      - type: schedule
+        value: "0 10 * * *"
+
+  - name: ui_health_agent
+    file: agents/ui_health_agent.md
+    enabled: true
+    schedule: "* * * * *"
+    priority: 1
+    dependencies:
+      - api_gateway_health_agent
+    triggers:
+      - type: schedule
+        value: "* * * * *"
+      - type: event
+        value: "deployment_completed"
+      - type: event
+        value: "nginx_restart"
+      - type: webhook
+        value: "/agents/ui-health/check"

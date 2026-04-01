@@ -1,0 +1,70 @@
+domain: quant
+version: "1.0"
+description: "Backtesting, strategy validation, performance analytics, and parameter optimization"
+agents:
+  - name: backtest_orchestrator_agent
+    file: agents/backtest_orchestrator_agent.md
+    enabled: true
+    schedule: "event-driven"
+    priority: 2
+    dependencies: []
+    triggers:
+      - type: event
+        value: "backtest_job_submitted"
+      - type: schedule
+        value: "0 2 * * 0"
+      - type: event
+        value: "strategy_parameters_updated"
+      - type: webhook
+        value: "/agents/backtest-orchestrator/submit"
+
+  - name: strategy_validation_agent
+    file: agents/strategy_validation_agent.md
+    enabled: true
+    schedule: "event-driven"
+    priority: 2
+    dependencies:
+      - backtest_orchestrator_agent
+    triggers:
+      - type: event
+        value: "backtest_completed"
+      - type: schedule
+        value: "0 3 1 * *"
+      - type: event
+        value: "regime_transition_detected"
+      - type: webhook
+        value: "/agents/strategy-validation/run"
+
+  - name: performance_analytics_agent
+    file: agents/performance_analytics_agent.md
+    enabled: true
+    schedule: "*/30 * * * * *"
+    priority: 2
+    dependencies: []
+    triggers:
+      - type: schedule
+        value: "*/30 * * * * *"
+      - type: event
+        value: "position_closed"
+      - type: event
+        value: "account_equity_updated"
+      - type: schedule
+        value: "0 23 * * *"
+
+  - name: parameter_optimizer_agent
+    file: agents/parameter_optimizer_agent.md
+    enabled: true
+    schedule: "event-driven"
+    priority: 3
+    dependencies:
+      - backtest_orchestrator_agent
+      - strategy_validation_agent
+    triggers:
+      - type: event
+        value: "backtest_completed"
+      - type: schedule
+        value: "0 4 15 * *"
+      - type: event
+        value: "performance_deviation_detected"
+      - type: webhook
+        value: "/agents/parameter-optimizer/run"

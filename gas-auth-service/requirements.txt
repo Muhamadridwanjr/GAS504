@@ -10,5 +10,6 @@ sqlalchemy[asyncio]
 asyncpg
 email-validator
 bcrypt
+redis[hiredis]
 pytest
 pytest-asyncio

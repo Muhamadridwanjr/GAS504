@@ -1,0 +1,91 @@
+domain: ai
+version: "1.0"
+description: "RAG pipeline, knowledge retrieval, vector indexing, model routing, and context synthesis for 18 AI features"
+agents:
+  - name: rag_query_agent
+    file: agents/rag_query_agent.md
+    enabled: true
+    schedule: "event-driven"
+    priority: 1
+    dependencies:
+      - knowledge_retrieval_agent
+      - vector_indexing_agent
+    triggers:
+      - type: event
+        value: "ai_feature_requested"
+      - type: event
+        value: "market_briefing_requested"
+      - type: webhook
+        value: "/agents/rag-query/retrieve"
+      - type: schedule
+        value: "*/30 * * * *"
+
+  - name: knowledge_retrieval_agent
+    file: agents/knowledge_retrieval_agent.md
+    enabled: true
+    schedule: "0 */2 * * *"
+    priority: 2
+    dependencies:
+      - vector_indexing_agent
+    triggers:
+      - type: schedule
+        value: "0 */2 * * *"
+      - type: event
+        value: "news_published"
+      - type: event
+        value: "fundamental_data_updated"
+      - type: schedule
+        value: "0 1 * * *"
+      - type: webhook
+        value: "/agents/knowledge-retrieval/ingest"
+
+  - name: vector_indexing_agent
+    file: agents/vector_indexing_agent.md
+    enabled: true
+    schedule: "*/10 * * * *"
+    priority: 2
+    dependencies: []
+    triggers:
+      - type: schedule
+        value: "*/10 * * * *"
+      - type: schedule
+        value: "0 0 * * 0"
+      - type: schedule
+        value: "0 2 * * *"
+      - type: event
+        value: "index_degraded"
+      - type: webhook
+        value: "/agents/vector-indexing/optimize"
+
+  - name: model_routing_agent
+    file: agents/model_routing_agent.md
+    enabled: true
+    schedule: "event-driven"
+    priority: 1
+    dependencies:
+      - rag_query_agent
+      - context_synthesis_agent
+    triggers:
+      - type: event
+        value: "rag_query_completed"
+      - type: event
+        value: "ai_feature_requested"
+      - type: event
+        value: "circuit_breaker_opened"
+      - type: schedule
+        value: "*/5 * * * *"
+
+  - name: context_synthesis_agent
+    file: agents/context_synthesis_agent.md
+    enabled: true
+    schedule: "event-driven"
+    priority: 1
+    dependencies:
+      - rag_query_agent
+    triggers:
+      - type: event
+        value: "rag_query_completed"
+      - type: event
+        value: "ai_feature_requested"
+      - type: webhook
+        value: "/agents/context-synthesis/assemble"

@@ -96,25 +96,41 @@ async def forward_request(request: Request, target_url: str) -> Response:
 async def forward_websocket(client_ws, target_url: str):
     """
     Proxies a WebSocket connection from client to an internal service.
+    Handles disconnect gracefully and cleans up both sides.
     """
     import websockets
     try:
-        async with websockets.connect(target_url) as backend_ws:
+        async with websockets.connect(target_url, ping_interval=20, ping_timeout=10) as backend_ws:
+            logger.debug("WebSocket proxy established", url=target_url)
+
             async def client_to_backend():
                 try:
                     while True:
                         msg = await client_ws.receive_text()
                         await backend_ws.send(msg)
-                except Exception: pass
+                except Exception:
+                    pass
 
             async def backend_to_client():
                 try:
                     while True:
                         msg = await backend_ws.recv()
                         await client_ws.send_text(msg)
-                except Exception: pass
+                except Exception:
+                    pass
 
-            await asyncio.gather(client_to_backend(), backend_to_client())
+            done, pending = await asyncio.wait(
+                [
+                    asyncio.create_task(client_to_backend()),
+                    asyncio.create_task(backend_to_client()),
+                ],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for task in pending:
+                task.cancel()
     except Exception as e:
-        logger.error("WebSocket proxy error", error=str(e), url=target_url)
-        await client_ws.close(code=1011)
+        logger.warning("WebSocket proxy error", error=str(e), url=target_url)
+        try:
+            await client_ws.close(code=1011)
+        except Exception:
+            pass

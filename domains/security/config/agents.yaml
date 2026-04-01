@@ -1,0 +1,70 @@
+domain: security
+version: "1.0"
+description: "Authentication monitoring, JWT token validation, billing integrity, and API rate limiting"
+agents:
+  - name: auth_monitor_agent
+    file: agents/auth_monitor_agent.md
+    enabled: true
+    schedule: "*/30 * * * * *"
+    priority: 1
+    dependencies: []
+    triggers:
+      - type: schedule
+        value: "*/30 * * * * *"
+      - type: event
+        value: "failed_login_threshold"
+      - type: event
+        value: "user_login"
+      - type: webhook
+        value: "/agents/auth-monitor/investigate"
+
+  - name: token_validation_agent
+    file: agents/token_validation_agent.md
+    enabled: true
+    schedule: "*/2 * * * *"
+    priority: 1
+    dependencies:
+      - auth_monitor_agent
+    triggers:
+      - type: schedule
+        value: "*/2 * * * *"
+      - type: event
+        value: "user_logout"
+      - type: event
+        value: "account_suspended"
+      - type: event
+        value: "password_changed"
+      - type: webhook
+        value: "/agents/token-validation/revoke"
+
+  - name: billing_integrity_agent
+    file: agents/billing_integrity_agent.md
+    enabled: true
+    schedule: "*/30 * * * *"
+    priority: 2
+    dependencies: []
+    triggers:
+      - type: schedule
+        value: "*/30 * * * *"
+      - type: event
+        value: "stripe_webhook_received"
+      - type: event
+        value: "admin_credit_grant"
+      - type: schedule
+        value: "45 23 * * *"
+
+  - name: rate_limit_agent
+    file: agents/rate_limit_agent.md
+    enabled: true
+    schedule: "*/30 * * * * *"
+    priority: 1
+    dependencies: []
+    triggers:
+      - type: schedule
+        value: "*/30 * * * * *"
+      - type: event
+        value: "high_load_detected"
+      - type: event
+        value: "api_abuse_detected"
+      - type: webhook
+        value: "/agents/rate-limit/block"

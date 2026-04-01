@@ -1,133 +1,271 @@
-import React, { useState } from 'react';
-import { Zap, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Zap, BarChart2, Shield, Brain, TrendingUp, Check } from 'lucide-react';
 import axios from 'axios';
-import { getGoogleLoginUrl } from '../services/auth';
 import { useAuth } from '../context/AuthContext';
 
+const LOGO = 'https://i.ibb.co.com/603h1JF3/photo-2026-01-27-22-14-18.jpg';
+const MONO = "'JetBrains Mono','Fira Code','Courier New',monospace";
+
+const MODES = [
+  { emoji: '💱', name: 'Forex AI',         color: '#f59e0b' },
+  { emoji: '₿',  name: 'Binance AI',       color: '#f7931a' },
+  { emoji: '🔮', name: 'Polymarket',       color: '#6366f1' },
+  { emoji: '🎰', name: 'Memecoin Signal',  color: '#9945ff' },
+];
+
+const FEATURES = [
+  { icon: Zap,       text: '21 AI Features · 4 Market Types' },
+  { icon: Brain,     text: 'Claude · GPT · Gemini · Grok' },
+  { icon: BarChart2, text: 'Live MT5 + Binance Real-Time Data' },
+  { icon: Shield,    text: 'Anti-Rug · Risk Manager · Alerts' },
+  { icon: TrendingUp,text: '94.2% Signal Accuracy (30d avg)' },
+];
+
 export default function LoginPage() {
-    const { saveSession } = useAuth();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [googleLoading, setGoogleLoading] = useState(false);
+  const { saveSession } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
-        try {
-            const res = await axios.post('/auth/v1/auth/login', { username, password });
-            saveSession(res.data.access_token, res.data.user);
-        } catch (err) {
-            setError(err?.response?.data?.detail || 'Login gagal. Periksa username dan password.');
-        } finally {
-            setLoading(false);
+  // Sync theme from localStorage so page respects user preference
+  useEffect(() => {
+    const saved = localStorage.getItem('gas-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+  }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      // Capture ?next= before saveSession changes the URL
+      const next = new URLSearchParams(window.location.search).get('next');
+      const res = await axios.post('/auth/v1/auth/login', { username, password });
+      saveSession(res.data.access_token, res.data.user);
+      if (next) window.location.href = next;
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Login gagal. Periksa username dan password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg-main)', color: 'var(--text-primary)' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
+        .login-input {
+          width: 100%;
+          background: var(--bg-panel);
+          border: 1.5px solid var(--border-color);
+          border-radius: 10px;
+          padding: 11px 14px;
+          font-size: 14px;
+          color: var(--text-primary);
+          outline: none;
+          transition: border-color 0.2s;
+          box-sizing: border-box;
         }
-    };
+        .login-input::placeholder { color: var(--text-dim); }
+        .login-input:focus { border-color: var(--accent); }
+      `}</style>
 
-    const handleGoogleLogin = async () => {
-        setError('');
-        setGoogleLoading(true);
-        try {
-            const url = await getGoogleLoginUrl();
-            window.location.href = url;
-        } catch {
-            setError('Gagal terhubung ke auth service.');
-            setGoogleLoading(false);
-        }
-    };
+      {/* ─── LEFT: Promo Panel ─────────────────────────────────────── */}
+      <div style={{
+        display: 'none',
+        flex: 1,
+        flexDirection: 'column',
+        justifyContent: 'center',
+        padding: '60px 56px',
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #111 60%, #0d0b00 100%)',
+      }} className="login-left">
+        <style>{`
+          @media (min-width: 1024px) { .login-left { display: flex !important; } }
+        `}</style>
 
-    return (
-        <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center px-4">
-            <div className="w-full max-w-sm">
-                <a href="/" className="inline-flex items-center gap-2 text-[var(--text-dim)] hover:text-[var(--text-primary)] transition-colors text-xs font-bold mb-6">
-                    <ArrowLeft size={12} /> Kembali ke Home
-                </a>
-                {/* Logo */}
-                <div className="flex items-center justify-center gap-3 mb-8">
-                    <img src="https://i.ibb.co.com/603h1JF3/photo-2026-01-27-22-14-18.jpg" alt="GAS" className="w-10 h-10 rounded-xl object-cover ring-2 ring-yellow-400/30" />
-                    <span className="text-xl font-black tracking-tight font-display">
-                        GOLDEN <span className="text-[var(--accent)]">AI</span>
-                    </span>
-                </div>
+        {/* Glow effects */}
+        <div style={{ position: 'absolute', top: '20%', left: '-10%', width: 400, height: 400, borderRadius: '50%', background: 'rgba(250,204,21,0.06)', filter: 'blur(80px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '10%', right: '-5%', width: 300, height: 300, borderRadius: '50%', background: 'rgba(153,69,255,0.05)', filter: 'blur(70px)', pointerEvents: 'none' }} />
+        {/* Grid bg */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 0,
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px)',
+          backgroundSize: '48px 48px',
+          maskImage: 'radial-gradient(ellipse 80% 80% at 30% 50%,black 20%,transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 30% 50%,black 20%,transparent 100%)',
+        }} />
 
-                {/* Card */}
-                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 flex flex-col gap-5">
-                    <div className="text-center">
-                        <h1 className="text-base font-black text-[var(--text-primary)] mb-1">Selamat Datang</h1>
-                        <p className="text-xs text-[var(--text-dim)]">Masuk ke GAS PRO Terminal</p>
-                    </div>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {/* Back link */}
+          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 700, textDecoration: 'none', marginBottom: 48, transition: 'color 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#facc15'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}>
+            <ArrowLeft size={13} /> Kembali ke Home
+          </a>
 
-                    {error && (
-                        <p className="text-[11px] text-[var(--danger)] bg-[var(--danger)]/10 border border-[var(--danger)]/20 rounded-lg px-3 py-2 text-center">
-                            {error}
-                        </p>
-                    )}
-
-                    {/* Username/Password form */}
-                    <form onSubmit={handleLogin} className="flex flex-col gap-3">
-                        <div>
-                            <label className="text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-widest mb-1 block">Username</label>
-                            <input
-                                type="text"
-                                value={username}
-                                onChange={e => setUsername(e.target.value)}
-                                placeholder="Username atau email"
-                                required
-                                autoComplete="username"
-                                className="w-full bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition-colors placeholder:text-[var(--text-dim)]"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-widest mb-1 block">Password</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                                autoComplete="current-password"
-                                className="w-full bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition-colors placeholder:text-[var(--text-dim)]"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-[var(--accent)] text-black font-black text-sm py-2.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? 'Masuk...' : 'Masuk'}
-                        </button>
-                    </form>
-
-                    {/* Divider */}
-                    <div className="flex items-center gap-2">
-                        <div className="flex-1 border-t border-[var(--border-color)]" />
-                        <span className="text-[10px] text-[var(--text-dim)]">atau</span>
-                        <div className="flex-1 border-t border-[var(--border-color)]" />
-                    </div>
-
-                    {/* Google login */}
-                    <button
-                        onClick={handleGoogleLogin}
-                        disabled={googleLoading}
-                        className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 font-bold text-sm py-2.5 px-4 rounded-xl hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm border border-gray-200"
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        {googleLoading ? 'Mengarahkan...' : 'Masuk dengan Google'}
-                    </button>
-                </div>
-
-                <p className="text-center text-xs text-[var(--text-dim)] mt-4">
-                    Belum punya akun?{' '}
-                    <a href="/signup" className="text-[var(--accent)] font-bold hover:underline">Daftar Gratis</a>
-                </p>
+          {/* Brand */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
+            <img src={LOGO} alt="GAS" style={{ width: 48, height: 48, borderRadius: 14, objectFit: 'cover', border: '2px solid rgba(250,204,21,0.3)' }} />
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 900, color: '#facc15', fontFamily: MONO }}>Golden AI</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Strategy Platform</div>
             </div>
+          </div>
+
+          {/* Headline */}
+          <h2 style={{ fontSize: 'clamp(28px,3vw,40px)', fontWeight: 900, lineHeight: 1.1, marginBottom: 12, fontFamily: MONO, color: '#fff' }}>
+            The #1 AI Trading<br />
+            <span style={{ background: 'linear-gradient(135deg,#facc15,#f59e0b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Super App</span>
+          </h2>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, marginBottom: 32, maxWidth: 360 }}>
+            Multi market · 21 AI features · Real-time intelligence untuk Forex, Crypto, Prediction, dan Memecoin.
+          </p>
+
+          {/* 4 mode chips */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 36 }}>
+            {MODES.map((m, i) => (
+              <div key={i} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                background: `${m.color}15`, border: `1px solid ${m.color}35`, color: m.color,
+              }}>
+                {m.emoji} {m.name}
+              </div>
+            ))}
+          </div>
+
+          {/* Feature list */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {FEATURES.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(250,204,21,0.1)', border: '1px solid rgba(250,204,21,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={13} style={{ color: '#facc15' }} />
+                  </div>
+                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>{f.text}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Stats row */}
+          <div style={{ display: 'flex', gap: 24, marginTop: 40, paddingTop: 32, borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            {[
+              { v: '12,400+', l: 'Traders' },
+              { v: '94.2%',   l: 'Akurasi' },
+              { v: '21',      l: 'Fitur AI' },
+            ].map((s, i) => (
+              <div key={i}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: '#facc15', fontFamily: MONO }}>{s.v}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{s.l}</div>
+              </div>
+            ))}
+          </div>
         </div>
-    );
+      </div>
+
+      {/* ─── RIGHT: Login Form ─────────────────────────────────────── */}
+      <div style={{
+        width: '100%',
+        maxWidth: 480,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        padding: '40px 32px',
+        background: 'var(--bg-card)',
+        borderLeft: '1px solid var(--border-color)',
+        margin: '0 auto',
+      }} className="login-right">
+        <style>{`
+          @media (min-width: 1024px) {
+            .login-right { max-width: 460px !important; margin: 0 !important; }
+          }
+        `}</style>
+
+        {/* Mobile back + logo */}
+        <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-dim)', fontSize: 12, fontWeight: 700, textDecoration: 'none', marginBottom: 32, transition: 'color 0.2s' }}
+          className="lg-hidden"
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-dim)'}>
+          <ArrowLeft size={13} /> Kembali ke Home
+        </a>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
+          <img src={LOGO} alt="GAS" style={{ width: 40, height: 40, borderRadius: 12, objectFit: 'cover', border: '2px solid var(--border-color)' }} />
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--accent)', fontFamily: MONO }}>Golden AI Strategy</div>
+            <div style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>AI Trading Platform</div>
+          </div>
+        </div>
+
+        <h1 style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-primary)', marginBottom: 6, letterSpacing: '-0.5px' }}>Selamat Datang</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 32 }}>Masuk ke akun Golden AI Strategy kamu</p>
+
+        {error && (
+          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#f87171', marginBottom: 20, textAlign: 'center' }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 10, fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Username / Email</label>
+            <input
+              className="login-input"
+              type="text"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              placeholder="Username atau email"
+              required
+              autoComplete="username"
+            />
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <label style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Password</label>
+              <a href="#" style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>Lupa password?</a>
+            </div>
+            <input
+              className="login-input"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              autoComplete="current-password"
+            />
+          </div>
+
+          <button type="submit" disabled={loading} style={{
+            width: '100%', background: '#facc15', color: '#000', border: 'none',
+            borderRadius: 12, padding: '13px', fontSize: 15, fontWeight: 900,
+            cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1,
+            boxShadow: '0 4px 20px rgba(250,204,21,0.35)', transition: 'transform 0.15s, box-shadow 0.15s',
+            marginTop: 4,
+          }}
+          onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(250,204,21,0.5)'; } }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(250,204,21,0.35)'; }}>
+            {loading ? 'Masuk...' : 'Masuk →'}
+          </button>
+        </form>
+
+        <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-dim)', marginTop: 28 }}>
+          Belum punya akun?{' '}
+          <a href="/signup" style={{ color: 'var(--accent)', fontWeight: 800, textDecoration: 'none' }}>Daftar Gratis</a>
+        </p>
+
+        {/* Trust badges */}
+        <div style={{ marginTop: 40, paddingTop: 24, borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
+          {['🔒 SSL Secured', '⚡ 21 AI Features', '💳 Tanpa Kartu Kredit'].map((t, i) => (
+            <span key={i} style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600 }}>{t}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }

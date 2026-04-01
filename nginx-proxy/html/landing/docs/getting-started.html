@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting Started with GAS — Quick Start Guide | GAS Docs</title>
+  <meta name="description" content="Learn how to get started with GAS (Golden AI Strategy) trading platform. Create account, choose your plan, navigate the terminal, and run your first AI analysis in minutes." />
+  <meta name="keywords" content="GAS getting started, GAS tutorial, AI trading setup, GAS account setup, trading terminal guide, GAS quick start" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://docs.gasstrategyai.xyz/getting-started" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://docs.gasstrategyai.xyz/getting-started" />
+  <meta property="og:title" content="Getting Started with GAS AI Trading Platform" />
+  <meta property="og:description" content="Step-by-step guide: Create account, choose plan, use the terminal, and run your first AI analysis." />
+  <meta property="og:image" content="https://gasstrategyai.xyz/og-image.png" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: { DEFAULT: '#d4a017', light: '#f5c842' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0a0a12; font-family: 'Inter', sans-serif; }
+    .gold-gradient { background: linear-gradient(135deg, #d4a017, #f5c842); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gold-border { border: 1px solid rgba(212,160,23,0.3); }
+    .nav-blur { backdrop-filter: blur(20px); background: rgba(10,10,18,0.9); }
+    .btn-gold { background: linear-gradient(135deg, #d4a017, #f5c842); color: #0a0a12; font-weight: 700; }
+    .sidebar-link { transition: all 0.2s; }
+    .sidebar-link:hover { background: rgba(212,160,23,0.08); color: #d4a017; }
+    .sidebar-link.active { background: rgba(212,160,23,0.1); color: #d4a017; border-left: 2px solid #d4a017; }
+    .code-block { font-family: 'JetBrains Mono', monospace; background: #08080f; border: 1px solid #1a1a2e; }
+    .step-number { background: linear-gradient(135deg, #d4a017, #f5c842); color: #0a0a12; }
+    .callout-info { background: rgba(59,130,246,0.08); border-left: 3px solid #3b82f6; }
+    .callout-warning { background: rgba(245,200,66,0.08); border-left: 3px solid #f5c842; }
+    .callout-tip { background: rgba(16,185,129,0.08); border-left: 3px solid #10b981; }
+    .prose-content h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.25rem; color: white; margin: 2rem 0 0.75rem; }
+    .prose-content p { color: #9ca3af; line-height: 1.75; margin-bottom: 1rem; font-size: 0.95rem; }
+    .prose-content ul { color: #9ca3af; font-size: 0.95rem; }
+    .prose-content li { margin-bottom: 0.4rem; }
+    .prose-content a { color: #d4a017; text-decoration: none; }
+    .prose-content a:hover { color: #f5c842; text-decoration: underline; }
+    .badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+    .toc-link { font-size: 0.8rem; color: #6b7280; transition: color 0.2s; display: block; padding: 3px 0; }
+    .toc-link:hover { color: #d4a017; }
+    .screenshot-placeholder { background: linear-gradient(135deg, #0f0f1a, #0a0a12); border: 1px dashed rgba(212,160,23,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #4b5563; font-size: 0.8rem; }
+    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: #0a0a12; } ::-webkit-scrollbar-thumb { background: #d4a017; border-radius: 3px; }
+  </style>
+</head>
+<body class="text-gray-100">
+
+  <!-- NAVBAR -->
+  <nav class="fixed top-0 left-0 right-0 z-50 nav-blur border-b border-[#1a1a2e]">
+    <div class="max-w-full px-4 sm:px-6">
+      <div class="flex items-center justify-between h-14">
+        <div class="flex items-center gap-6">
+          <a href="https://gasstrategyai.xyz" class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-md btn-gold flex items-center justify-center text-xs font-black">G</div>
+            <span class="font-display font-700 text-lg text-white">GAS <span class="text-[#d4a017]">Docs</span></span>
+          </a>
+          <div class="hidden md:flex items-center gap-4 text-sm text-gray-400">
+            <a href="https://gasstrategyai.xyz" class="hover:text-[#d4a017] transition-colors">Home</a>
+            <a href="./index.html" class="hover:text-[#d4a017] transition-colors">Docs Home</a>
+            <a href="https://pricing.gasstrategyai.xyz" class="hover:text-[#d4a017] transition-colors">Pricing</a>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="https://gasstrategyai.xyz/login" class="text-sm text-gray-400 hover:text-white transition-colors">Login</a>
+          <a href="https://gasstrategyai.xyz/signup" class="btn-gold px-4 py-1.5 rounded-lg text-sm">Get Started</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="flex pt-14 min-h-screen">
+    <!-- SIDEBAR -->
+    <aside class="hidden lg:flex flex-col w-64 fixed top-14 bottom-0 left-0 border-r border-[#1a1a2e] bg-[#0a0a12] overflow-y-auto">
+      <div class="p-4">
+        <div class="flex items-center gap-2 mb-5 px-2">
+          <span class="badge bg-[#d4a017]/15 text-[#d4a017]">v2.1.0</span>
+          <span class="badge bg-[#10b981]/15 text-[#10b981]">Stable</span>
+        </div>
+        <div class="mb-5">
+          <div class="text-xs font-600 text-gray-500 uppercase tracking-wider px-3 mb-2">Getting Started</div>
+          <a href="./index.html" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400"><span>🏠</span> Overview</a>
+          <a href="./getting-started.html" class="sidebar-link active flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[#d4a017] bg-[#d4a017]/10 border-l-2 border-[#d4a017]"><span>🚀</span> Quick Start</a>
+          <a href="#account" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 pl-8">Account Setup</a>
+          <a href="#plans" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 pl-8">Choose a Plan</a>
+          <a href="#terminal" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 pl-8">Terminal Guide</a>
+          <a href="#first-analysis" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 pl-8">First AI Analysis</a>
+          <a href="#api-usage" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 pl-8">API Usage</a>
+        </div>
+        <div class="mb-5">
+          <div class="text-xs font-600 text-gray-500 uppercase tracking-wider px-3 mb-2">API Reference</div>
+          <a href="./index.html#api-auth" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400"><span>🔑</span> Authentication</a>
+          <a href="./index.html#api-signals" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400"><span>📡</span> Signals API</a>
+          <a href="./index.html#api-analysis" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400"><span>🔬</span> Analysis API</a>
+        </div>
+        <div>
+          <div class="text-xs font-600 text-gray-500 uppercase tracking-wider px-3 mb-2">Support</div>
+          <a href="#" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400"><span>❓</span> FAQ</a>
+          <a href="#" class="sidebar-link flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400"><span>💬</span> Community</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 lg:ml-64 min-w-0">
+      <div class="max-w-3xl mx-auto px-6 py-10">
+
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-xs text-gray-500 mb-6">
+          <a href="./index.html" class="hover:text-[#d4a017] transition-colors">Docs</a>
+          <span>›</span>
+          <a href="./getting-started.html" class="text-[#d4a017]">Getting Started</a>
+        </nav>
+
+        <!-- Header -->
+        <div class="mb-8">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#10b981]/10 text-[#10b981] text-xs mb-3">🚀 GETTING STARTED GUIDE</div>
+          <h1 class="font-display text-3xl md:text-4xl font-800 text-white mb-3">Getting Started with GAS</h1>
+          <p class="text-gray-400">Get up and running with GAS AI Trading Terminal in under 10 minutes. This guide walks you through account creation, plan selection, terminal navigation, and your first AI analysis.</p>
+          <div class="flex items-center gap-4 mt-4 text-xs text-gray-500">
+            <span>📖 ~10 min read</span>
+            <span>🔄 Updated March 2025</span>
+            <span>👤 For: All users</span>
+          </div>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="gold-border rounded-xl bg-[#0f0f1a] p-5 mb-10">
+          <div class="font-semibold text-white text-sm mb-3">📋 Table of Contents</div>
+          <div class="grid sm:grid-cols-2 gap-1">
+            <a href="#account" class="toc-link">1. Creating Your Account</a>
+            <a href="#verify" class="toc-link">2. Email Verification</a>
+            <a href="#plans" class="toc-link">3. Choosing Your Plan</a>
+            <a href="#terminal" class="toc-link">4. Navigating the Terminal</a>
+            <a href="#first-analysis" class="toc-link">5. Your First AI Analysis</a>
+            <a href="#signal-interpretation" class="toc-link">6. Interpreting Signals</a>
+            <a href="#risk-setup" class="toc-link">7. Setting Up Risk Manager</a>
+            <a href="#api-usage" class="toc-link">8. API Usage Examples</a>
+            <a href="#next-steps" class="toc-link">9. Next Steps</a>
+          </div>
+        </div>
+
+        <div class="prose-content">
+
+          <!-- Step 1: Account Creation -->
+          <section id="account" class="mb-12">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="step-number w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">1</div>
+              <h2 class="font-display text-2xl font-700 text-white m-0">Creating Your Account</h2>
+            </div>
+
+            <p>Navigate to <a href="https://gasstrategyai.xyz/signup">gasstrategyai.xyz/signup</a> and fill in the registration form. GAS supports both email/password registration and Google OAuth.</p>
+
+            <!-- Screenshot Placeholder -->
+            <div class="screenshot-placeholder h-48 my-5 flex-col gap-2">
+              <div class="text-2xl">📸</div>
+              <div>Screenshot: Registration form</div>
+            </div>
+
+            <h3>Required Information</h3>
+            <ul class="list-none space-y-2 ml-0">
+              <li class="flex gap-2 items-start"><span class="text-[#10b981] mt-1">✓</span><span><strong class="text-white">Full Name</strong> — Your display name in the platform</span></li>
+              <li class="flex gap-2 items-start"><span class="text-[#10b981] mt-1">✓</span><span><strong class="text-white">Email Address</strong> — Used for login and notifications</span></li>
+              <li class="flex gap-2 items-start"><span class="text-[#10b981] mt-1">✓</span><span><strong class="text-white">Password</strong> — Minimum 8 characters, mix of letters and numbers</span></li>
+              <li class="flex gap-2 items-start"><span class="text-[#10b981] mt-1">✓</span><span><strong class="text-white">Country</strong> — Used for localized features and timezone</span></li>
+            </ul>
+
+            <div class="callout-tip rounded-xl p-4 my-4">
+              <div class="text-[#10b981] font-semibold text-sm mb-1">💡 Tip: Google OAuth</div>
+              <p class="m-0 text-sm">Sign up with your Google account for faster onboarding. No password to remember — just click "Continue with Google."</p>
+            </div>
+          </section>
+
+          <!-- Step 2: Email Verification -->
+          <section id="verify" class="mb-12">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="step-number w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">2</div>
+              <h2 class="font-display text-2xl font-700 text-white m-0">Email Verification</h2>
+            </div>
+
+            <p>After registration, check your inbox for a verification email from <code class="text-[#d4a017] bg-[#0f0f1a] px-1.5 py-0.5 rounded text-xs font-mono">noreply@gasstrategyai.xyz</code>. Click the verification link to activate your account.</p>
+
+            <div class="callout-warning rounded-xl p-4 my-4">
+              <div class="text-[#f5c842] font-semibold text-sm mb-1">⚠️ Important</div>
+              <p class="m-0 text-sm">The verification link expires in 24 hours. If you don't see the email, check your spam folder or use the "Resend Verification" option on the login page.</p>
+            </div>
+          </section>
+
+          <!-- Step 3: Plan Selection -->
+          <section id="plans" class="mb-12">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="step-number w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">3</div>
+              <h2 class="font-display text-2xl font-700 text-white m-0">Choosing Your Plan</h2>
+            </div>
+
+            <p>After verifying your email, you'll be prompted to choose a subscription plan. Here's a quick comparison to help you decide:</p>
+
+            <div class="overflow-x-auto rounded-xl border border-[#1a1a2e] my-5">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-[#1a1a2e] bg-[#0f0f1a]">
+                    <th class="text-left p-3 text-gray-400 font-medium">Plan</th>
+                    <th class="p-3 text-gray-400 font-medium text-center">Price</th>
+                    <th class="p-3 text-gray-400 font-medium text-center">Features</th>
+                    <th class="p-3 text-gray-400 font-medium text-center">Best For</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#1a1a2e]">
+                  <tr class="bg-[#0a0a12]"><td class="p-3 font-medium text-white">Essential</td><td class="p-3 text-center text-[#d4a017]">$2.99/mo</td><td class="p-3 text-center text-gray-400">4 features</td><td class="p-3 text-center text-gray-400">Beginners</td></tr>
+                  <tr class="bg-[#0f0f1a]"><td class="p-3 font-medium text-white">Plus</td><td class="p-3 text-center text-[#d4a017]">$5.99/mo</td><td class="p-3 text-center text-gray-400">9 features</td><td class="p-3 text-center text-gray-400">Active traders</td></tr>
+                  <tr class="bg-[#0a0a12]"><td class="p-3 font-medium text-[#d4a017]">Premium ⭐</td><td class="p-3 text-center text-[#d4a017]">$11.99/mo</td><td class="p-3 text-center text-gray-400">15 features</td><td class="p-3 text-center text-gray-400">Serious traders</td></tr>
+                  <tr class="bg-[#0f0f1a]"><td class="p-3 font-medium text-white">Ultimate</td><td class="p-3 text-center text-[#d4a017]">$19.99/mo</td><td class="p-3 text-center text-gray-400">18 features</td><td class="p-3 text-center text-gray-400">Prop traders</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="callout-info rounded-xl p-4 my-4">
+              <div class="text-blue-400 font-semibold text-sm mb-1">ℹ️ Not sure which plan?</div>
+              <p class="m-0 text-sm">Start with Essential ($2.99) and upgrade anytime. You can also try the demo mode before committing to a paid plan.</p>
+            </div>
+          </section>
+
+          <!-- Step 4: Terminal Navigation -->
+          <section id="terminal" class="mb-12">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="step-number w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">4</div>
+              <h2 class="font-display text-2xl font-700 text-white m-0">Navigating the Terminal</h2>
+            </div>
+
+            <p>The GAS terminal (<a href="https://app.gasstrategyai.xyz">app.gasstrategyai.xyz</a>) is your main trading workspace. Here's an overview of the key sections:</p>
+
+            <!-- Screenshot Placeholder -->
+            <div class="screenshot-placeholder h-56 my-5 flex-col gap-2">
+              <div class="text-2xl">📸</div>
+              <div>Screenshot: Main terminal interface</div>
+            </div>
+
+            <h3>Left Sidebar — Navigation</h3>
+            <p>The left sidebar contains all feature shortcuts. Click any icon to open that feature in the main panel:</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><strong class="text-white">📊 Markets</strong> — Live price feeds for Forex, Gold, and Crypto</li>
+              <li><strong class="text-white">📡 Signals</strong> — AI-generated BUY/SELL signals</li>
+              <li><strong class="text-white">🔬 Technical</strong> — Multi-timeframe technical analysis</li>
+              <li><strong class="text-white">📅 Calendar</strong> — Economic events calendar</li>
+              <li><strong class="text-white">🛡️ Risk</strong> — Position size and risk calculator</li>
+              <li><strong class="text-white">⚙️ Settings</strong> — Account settings, billing, notifications</li>
+            </ul>
+
+            <h3>Pair Selector</h3>
+            <p>Use the pair selector at the top of the terminal to switch between trading instruments. Type the symbol name (e.g., XAUUSD, EURUSD, BTCUSDT) or browse by category.</p>
+
+            <h3>Timeframe Buttons</h3>
+            <p>Select your analysis timeframe using the buttons in the top toolbar: M1, M5, M15, M30, H1, H4, D1, W1. For swing trading, H4 and D1 are recommended. For scalping, M15 or M30.</p>
+          </section>
+
+          <!-- Step 5: First AI Analysis -->
+          <section id="first-analysis" class="mb-12">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="step-number w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">5</div>
+              <h2 class="font-display text-2xl font-700 text-white m-0">Your First AI Analysis</h2>
+            </div>
+
+            <p>Let's run your first AI technical analysis on XAU/USD (Gold). Follow these steps:</p>
+
+            <div class="space-y-3 my-6">
+              <div class="flex gap-4 p-4 rounded-xl bg-[#0f0f1a] border border-[#1a1a2e]">
+                <div class="w-7 h-7 rounded-full step-number flex items-center justify-center text-xs font-bold shrink-0">1</div>
+                <div>
+                  <div class="font-semibold text-white text-sm">Select XAUUSD</div>
+                  <div class="text-gray-400 text-xs mt-0.5">Type "XAUUSD" in the pair selector and press Enter, or select Gold from the Metals category.</div>
+                </div>
+              </div>
+              <div class="flex gap-4 p-4 rounded-xl bg-[#0f0f1a] border border-[#1a1a2e]">
+                <div class="w-7 h-7 rounded-full step-number flex items-center justify-center text-xs font-bold shrink-0">2</div>
+                <div>
+                  <div class="font-semibold text-white text-sm">Click "AI Analysis" button</div>
+                  <div class="text-gray-400 text-xs mt-0.5">Located in the top toolbar, this button triggers a full multi-timeframe AI analysis.</div>
+                </div>
+              </div>
+              <div class="flex gap-4 p-4 rounded-xl bg-[#0f0f1a] border border-[#1a1a2e]">
+                <div class="w-7 h-7 rounded-full step-number flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                <div>
+                  <div class="font-semibold text-white text-sm">Wait for analysis (2-5 seconds)</div>
+                  <div class="text-gray-400 text-xs mt-0.5">GAS AI processes market structure, key levels, momentum, and generates a comprehensive report.</div>
+                </div>
+              </div>
+              <div class="flex gap-4 p-4 rounded-xl bg-[#0f0f1a] border border-[#1a1a2e]">
+                <div class="w-7 h-7 rounded-full step-number flex items-center justify-center text-xs font-bold shrink-0">4</div>
+                <div>
+                  <div class="font-semibold text-white text-sm">Review the analysis report</div>
+                  <div class="text-gray-400 text-xs mt-0.5">You'll see: overall bias, key levels, signal (if any), entry/SL/TP, and risk parameters.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Screenshot Placeholder -->
+            <div class="screenshot-placeholder h-48 my-5 flex-col gap-2">
+              <div class="text-2xl">📸</div>
+              <div>Screenshot: AI Analysis result panel</div>
+            </div>
+          </section>
+
+          <!-- Step 6: Signal Interpretation -->
+          <section id="signal-interpretation" class="mb-12">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="step-number w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">6</div>
+              <h2 class="font-display text-2xl font-700 text-white m-0">Interpreting AI Signals</h2>
+            </div>
+
+            <p>GAS AI signals contain several components. Here's how to read them:</p>
+
+            <div class="code-block rounded-xl p-5 my-5 font-mono text-xs overflow-x-auto">
+              <div class="text-gray-500 mb-3">// Example AI Signal Output</div>
+              <div class="space-y-1">
+                <div><span class="text-[#d4a017]">Symbol:</span> <span class="text-white">XAUUSD (Gold)</span></div>
+                <div><span class="text-[#d4a017]">Signal:</span> <span class="text-[#10b981] font-bold">BUY ↑</span></div>
+                <div><span class="text-[#d4a017]">Confidence:</span> <span class="text-[#f5c842]">87.3%</span> <span class="text-gray-500">// Above 75% = high confidence</span></div>
+                <div><span class="text-[#d4a017]">Timeframe:</span> <span class="text-white">H4</span></div>
+                <div><span class="text-[#d4a017]">Entry Zone:</span> <span class="text-white">2,338.00 — 2,345.00</span></div>
+                <div><span class="text-[#d4a017]">Stop Loss:</span> <span class="text-[#ef4444]">2,324.50</span> <span class="text-gray-500">// Below last swing low</span></div>
+                <div><span class="text-[#d4a017]">Take Profit 1:</span> <span class="text-[#10b981]">2,365.00</span> <span class="text-gray-500">// 1:1.5 RR</span></div>
+                <div><span class="text-[#d4a017]">Take Profit 2:</span> <span class="text-[#10b981]">2,385.00</span> <span class="text-gray-500">// 1:3.2 RR</span></div>
+                <div><span class="text-[#d4a017]">Risk/Reward:</span> <span class="text-white">1:3.2</span></div>
+                <div><span class="text-[#d4a017]">Validity:</span> <span class="text-white">Next 2–3 candles</span></div>
+              </div>
+            </div>
+
+            <h3>Confidence Score Guide</h3>
+            <ul class="list-none space-y-2">
+              <li class="flex gap-3 items-center"><span class="inline-block w-3 h-3 rounded-full bg-[#10b981]"></span><span><strong class="text-white">75-100%</strong> — High confidence. Signal aligns across multiple timeframes and indicators.</span></li>
+              <li class="flex gap-3 items-center"><span class="inline-block w-3 h-3 rounded-full bg-[#f5c842]"></span><span><strong class="text-white">55-74%</strong> — Medium confidence. Consider waiting for confirmation candle.</span></li>
+              <li class="flex gap-3 items-center"><span class="inline-block w-3 h-3 rounded-full bg-[#ef4444]"></span><span><strong class="text-white">Below 55%</strong> — Low confidence. Skip this signal or use smaller position size.</span></li>
+            </ul>
+          </section>
+
+          <!-- Step 7: Risk Setup -->
+          <section id="risk-setup" class="mb-12">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="step-number w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">7</div>
+              <h2 class="font-display text-2xl font-700 text-white m-0">Setting Up Risk Manager</h2>
+            </div>
+
+            <p>The AI Risk Manager (Plus plan and above) automatically calculates optimal position sizes based on your account balance and risk tolerance. Configure it once for consistent money management:</p>
+
+            <div class="space-y-3 my-5">
+              <div class="p-4 rounded-xl bg-[#0f0f1a] border border-[#1a1a2e]">
+                <div class="font-semibold text-white text-sm mb-1">Account Balance</div>
+                <p class="text-gray-400 text-xs m-0">Enter your current trading account balance (e.g., $1,000 USD). This is used for position size calculation.</p>
+              </div>
+              <div class="p-4 rounded-xl bg-[#0f0f1a] border border-[#1a1a2e]">
+                <div class="font-semibold text-white text-sm mb-1">Risk Per Trade</div>
+                <p class="text-gray-400 text-xs m-0">Recommended: 1-2% per trade. GAS defaults to 1%. With $1,000 balance, max risk = $10 per trade.</p>
+              </div>
+              <div class="p-4 rounded-xl bg-[#0f0f1a] border border-[#1a1a2e]">
+                <div class="font-semibold text-white text-sm mb-1">Max Daily Loss Limit</div>
+                <p class="text-gray-400 text-xs m-0">GAS will warn you when you approach your daily loss limit. Recommended: 5% of account balance.</p>
+              </div>
+            </div>
+
+            <div class="callout-tip rounded-xl p-4 my-4">
+              <div class="text-[#10b981] font-semibold text-sm mb-1">💡 Pro Tip: Prop Firm Mode</div>
+              <p class="m-0 text-sm">If you're trading a prop firm account (FTMO, MyForexFunds, etc.), enable "Prop Firm Mode" in Risk Manager. GAS will automatically enforce the firm's drawdown rules and alert you before violations.</p>
+            </div>
+          </section>
+
+          <!-- Step 8: API Usage -->
+          <section id="api-usage" class="mb-12">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="step-number w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">8</div>
+              <h2 class="font-display text-2xl font-700 text-white m-0">API Usage Examples</h2>
+            </div>
+
+            <p>The GAS API allows you to programmatically access all platform features. Here are quick examples to get you started:</p>
+
+            <h3>Authentication</h3>
+            <div class="code-block rounded-xl p-5 my-4 font-mono text-xs overflow-x-auto">
+              <div class="text-gray-500 mb-2"># Python: Get API token</div>
+              <pre class="text-gray-300"><span class="text-[#10b981]">import</span> requests
+
+response = requests.post(
+    <span class="text-[#f5c842]">"https://app.gasstrategyai.xyz/auth/v1/login"</span>,
+    json={
+        <span class="text-[#f5c842]">"email"</span>: <span class="text-[#f5c842]">"your@email.com"</span>,
+        <span class="text-[#f5c842]">"password"</span>: <span class="text-[#f5c842]">"your_password"</span>
+    }
+)
+token = response.json()[<span class="text-[#f5c842]">"access_token"</span>]
+headers = {<span class="text-[#f5c842]">"Authorization"</span>: f<span class="text-[#f5c842]">"Bearer {token}"</span>}</pre>
+            </div>
+
+            <h3>Get AI Signal via cURL</h3>
+            <div class="code-block rounded-xl p-5 my-4 font-mono text-xs overflow-x-auto">
+              <pre class="text-gray-300"><span class="text-[#d4a017]">curl</span> -X POST https://app.gasstrategyai.xyz/web/api/v1/analysis/signal \
+  -H <span class="text-[#f5c842]">"Authorization: Bearer YOUR_TOKEN"</span> \
+  -H <span class="text-[#f5c842]">"Content-Type: application/json"</span> \
+  -d <span class="text-[#f5c842]">'{"symbol": "EURUSD", "timeframe": "H1"}'</span></pre>
+            </div>
+
+            <h3>JavaScript Fetch Example</h3>
+            <div class="code-block rounded-xl p-5 my-4 font-mono text-xs overflow-x-auto">
+              <pre class="text-gray-300"><span class="text-[#10b981]">const</span> signal = <span class="text-[#10b981]">await</span> fetch(
+  <span class="text-[#f5c842]">"https://app.gasstrategyai.xyz/web/api/v1/analysis/signal"</span>,
+  {
+    method: <span class="text-[#f5c842]">"POST"</span>,
+    headers: {
+      <span class="text-[#f5c842]">"Authorization"</span>: <span class="text-[#f5c842]">`Bearer ${token}`</span>,
+      <span class="text-[#f5c842]">"Content-Type"</span>: <span class="text-[#f5c842]">"application/json"</span>
+    },
+    body: JSON.stringify({
+      symbol: <span class="text-[#f5c842]">"XAUUSD"</span>,
+      timeframe: <span class="text-[#f5c842]">"H4"</span>
+    })
+  }
+);
+<span class="text-[#10b981]">const</span> data = <span class="text-[#10b981]">await</span> signal.json();
+console.log(data.signal, data.confidence);</pre>
+            </div>
+          </section>
+
+          <!-- Step 9: Next Steps -->
+          <section id="next-steps" class="mb-12">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="step-number w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">9</div>
+              <h2 class="font-display text-2xl font-700 text-white m-0">Next Steps</h2>
+            </div>
+
+            <p>Congratulations on completing the quick start guide! Here's where to go next:</p>
+
+            <div class="grid sm:grid-cols-2 gap-4 my-6">
+              <a href="./index.html#api-signals" class="p-4 rounded-xl bg-[#0f0f1a] gold-border hover:border-[#d4a017]/60 transition-all block">
+                <div class="text-lg mb-1">📡</div>
+                <div class="font-semibold text-white text-sm">Signals API Reference</div>
+                <div class="text-gray-500 text-xs mt-1">Full API documentation for all 18 features</div>
+              </a>
+              <a href="https://blog.gasstrategyai.xyz" class="p-4 rounded-xl bg-[#0f0f1a] gold-border hover:border-[#d4a017]/60 transition-all block">
+                <div class="text-lg mb-1">📰</div>
+                <div class="font-semibold text-white text-sm">Strategy Blog</div>
+                <div class="text-xs text-gray-500 mt-1">Trading strategies and market analysis</div>
+              </a>
+              <a href="./index.html#sdk-python" class="p-4 rounded-xl bg-[#0f0f1a] gold-border hover:border-[#d4a017]/60 transition-all block">
+                <div class="text-lg mb-1">🐍</div>
+                <div class="font-semibold text-white text-sm">Python SDK</div>
+                <div class="text-xs text-gray-500 mt-1">Build automated trading systems</div>
+              </a>
+              <a href="https://pricing.gasstrategyai.xyz" class="p-4 rounded-xl bg-[#0f0f1a] gold-border hover:border-[#d4a017]/60 transition-all block">
+                <div class="text-lg mb-1">⬆️</div>
+                <div class="font-semibold text-white text-sm">Upgrade Your Plan</div>
+                <div class="text-xs text-gray-500 mt-1">Unlock all 18 AI features</div>
+              </a>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Navigation footer -->
+        <div class="flex items-center justify-between pt-8 border-t border-[#1a1a2e]">
+          <a href="./index.html" class="flex items-center gap-2 text-gray-400 hover:text-[#d4a017] transition-colors text-sm">
+            ← Documentation Home
+          </a>
+          <a href="./index.html#api-auth" class="flex items-center gap-2 text-gray-400 hover:text-[#d4a017] transition-colors text-sm">
+            API Reference →
+          </a>
+        </div>
+
+        <!-- Feedback -->
+        <div class="mt-8 p-5 rounded-xl bg-[#0f0f1a] border border-[#1a1a2e] text-center">
+          <div class="text-sm text-gray-400 mb-3">Was this page helpful?</div>
+          <div class="flex gap-3 justify-center">
+            <button class="px-5 py-2 rounded-lg bg-[#10b981]/10 border border-[#10b981]/30 text-[#10b981] text-sm hover:bg-[#10b981]/20 transition-colors">👍 Yes</button>
+            <button class="px-5 py-2 rounded-lg bg-[#ef4444]/10 border border-[#ef4444]/30 text-[#ef4444] text-sm hover:bg-[#ef4444]/20 transition-colors">👎 No</button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <footer class="border-t border-[#1a1a2e] bg-[#0a0a12] lg:ml-64">
+    <div class="max-w-3xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+      <div>© 2025 GAS — Golden AI Strategy. Docs v2.1.0</div>
+      <div class="flex gap-4">
+        <a href="./index.html" class="hover:text-[#d4a017]">Docs Home</a>
+        <a href="https://gasstrategyai.xyz" class="hover:text-[#d4a017]">Main Site</a>
+        <a href="https://pricing.gasstrategyai.xyz" class="hover:text-[#d4a017]">Pricing</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Main Site Sitemap -->
+  <sitemap>
+    <loc>https://gasstrategyai.xyz/sitemap-main.xml</loc>
+    <lastmod>2025-03-22</lastmod>
+  </sitemap>
+
+  <!-- Blog Sitemap -->
+  <sitemap>
+    <loc>https://blog.gasstrategyai.xyz/sitemap.xml</loc>
+    <lastmod>2025-03-22</lastmod>
+  </sitemap>
+
+  <!-- Docs Sitemap -->
+  <sitemap>
+    <loc>https://docs.gasstrategyai.xyz/sitemap.xml</loc>
+    <lastmod>2025-03-22</lastmod>
+  </sitemap>
+
+</sitemapindex>

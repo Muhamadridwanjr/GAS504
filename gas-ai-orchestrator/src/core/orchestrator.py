@@ -166,9 +166,9 @@ class AIOrchestrator:
             }
 
         if cmd == "MODE":
-            target = args[0] if args else "FLASH"
-            model_id = self.model_map.get(target, self.model_map["FLASH"])
-            self.user_models[user_id] = model_id
+            target = args[0] if args else "GEMINI-2.0-FLASH"
+            model_id = self.model_map.get(target, self.model_map["GEMINI-2.0-FLASH"])
+            self.user_models[user_id] = target
             return {"type": "system", "result": f"✅ Model diganti ke {target} ({model_id})"}
 
         if cmd in ("ANLS", "ANALISA"):

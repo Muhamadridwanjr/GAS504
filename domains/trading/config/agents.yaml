@@ -1,0 +1,110 @@
+domain: trading
+version: "1.0"
+description: "Signal generation, risk management, trade planning, position sizing, alerts, and screener"
+agents:
+  - name: signal_generation_agent
+    file: agents/signal_generation_agent.md
+    enabled: true
+    schedule: "*/5 * * * *"
+    priority: 1
+    dependencies: []
+    triggers:
+      - type: event
+        value: "mtf_analysis_ready"
+      - type: event
+        value: "pattern_detected"
+      - type: event
+        value: "regime_transition_detected"
+      - type: schedule
+        value: "*/5 * * * *"
+      - type: webhook
+        value: "/agents/signal-generation/run"
+
+  - name: risk_management_agent
+    file: agents/risk_management_agent.md
+    enabled: true
+    schedule: "*/5 * * * *"
+    priority: 1
+    dependencies:
+      - signal_generation_agent
+    triggers:
+      - type: event
+        value: "signal_generated"
+      - type: schedule
+        value: "*/5 * * * *"
+      - type: event
+        value: "position_closed"
+      - type: event
+        value: "account_equity_updated"
+      - type: webhook
+        value: "/agents/risk-management/audit"
+
+  - name: trade_planning_agent
+    file: agents/trade_planning_agent.md
+    enabled: true
+    schedule: "event-driven"
+    priority: 2
+    dependencies:
+      - signal_generation_agent
+      - risk_management_agent
+    triggers:
+      - type: event
+        value: "risk_approved"
+      - type: schedule
+        value: "*/30 * * * *"
+      - type: event
+        value: "pattern_invalidated"
+      - type: webhook
+        value: "/agents/trade-planning/generate"
+
+  - name: position_sizing_agent
+    file: agents/position_sizing_agent.md
+    enabled: true
+    schedule: "event-driven"
+    priority: 1
+    dependencies:
+      - signal_generation_agent
+    triggers:
+      - type: event
+        value: "signal_generated"
+      - type: event
+        value: "account_equity_updated"
+      - type: event
+        value: "volatility_spike"
+      - type: webhook
+        value: "/agents/position-sizing/calculate"
+
+  - name: alert_dispatch_agent
+    file: agents/alert_dispatch_agent.md
+    enabled: true
+    schedule: "event-driven"
+    priority: 1
+    dependencies: []
+    triggers:
+      - type: event
+        value: "signal_generated"
+      - type: event
+        value: "pattern_detected"
+      - type: event
+        value: "risk_rejected"
+      - type: event
+        value: "drawdown_warning"
+      - type: schedule
+        value: "*/30 * * * *"
+
+  - name: screener_scan_agent
+    file: agents/screener_scan_agent.md
+    enabled: true
+    schedule: "*/5 * * * *"
+    priority: 3
+    dependencies:
+      - signal_generation_agent
+    triggers:
+      - type: schedule
+        value: "*/5 * * * *"
+      - type: event
+        value: "mtf_analysis_ready"
+      - type: event
+        value: "regime_transition_detected"
+      - type: webhook
+        value: "/agents/screener/scan"

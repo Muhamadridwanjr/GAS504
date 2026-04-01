@@ -59,7 +59,7 @@ export default function ForumView() {
                     <Users size={20} className="text-[var(--accent)]" />
                     <div>
                         <h2 className="text-xl font-display font-black uppercase text-[var(--text-primary)]">Forum VIP</h2>
-                        <p className="text-[10px] text-[var(--text-dim)] uppercase tracking-widest font-bold">Komunitas Eksklusif GAS Pro Traders</p>
+                        <p className="text-[10px] text-[var(--text-dim)] uppercase tracking-widest font-bold">Komunitas Eksklusif Golden AI Strategy Traders</p>
                     </div>
                     <Crown size={16} className="text-[var(--accent)] ml-1" />
                 </div>

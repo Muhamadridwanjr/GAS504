@@ -26,6 +26,17 @@ class EngineClients:
         payload = {"pair": pair}
         return await self._post(f"{settings.statarb_engine_url}/signal", payload)
 
+    async def fetch_trend(self, symbol: str, timeframe: str) -> Optional[Dict[str, Any]]:
+        payload = {"symbol": symbol, "timeframe": timeframe}
+        return await self._post(f"{settings.trend_engine_url}/trend", payload)
+
+    async def fetch_market_phase(self, symbol: str, timeframe: str) -> Optional[Dict[str, Any]]:
+        payload = {"symbol": symbol, "timeframe": timeframe}
+        return await self._post(f"{settings.market_phase_url}/phase", payload)
+
+    async def fetch_orderflow(self, symbol: str) -> Optional[Dict[str, Any]]:
+        return await self._get(f"{settings.orderflow_url}/orderflow/{symbol}/signal", {})
+
     async def _get(self, url: str, params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         try:
             async with httpx.AsyncClient() as client:

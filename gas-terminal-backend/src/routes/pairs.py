@@ -1,42 +1,109 @@
 """
-GET /terminal/pairs – List all tradeable pairs with current prices.
+GET /terminal/pairs          – Live MT5 scanner prices for all known pairs.
+GET /terminal/market/{symbol}– Single-pair live snapshot from Redis.
+GET /terminal/market/all     – All active scanner symbols from Redis.
 """
-import random
-from fastapi import APIRouter
-from src.config import settings
-from src.services.client import fetch_json
+import json
+from fastapi import APIRouter, HTTPException
+from src.services.redis import redis_service
 
 router = APIRouter()
-
-PAIRS = [
-    {"symbol": "XAUUSD", "name": "Gold / USD", "base": 2034.50, "vol": 0.8, "type": "Commodity",
-     "trend": [30, 45, 40, 60, 55, 75, 70, 65, 80, 75]},
-    {"symbol": "BTCUSD", "name": "Bitcoin / USD", "base": 64230.15, "vol": 25.0, "type": "Crypto",
-     "trend": [50, 40, 70, 60, 90, 80, 100, 85, 95, 90]},
-    {"symbol": "NVDA", "name": "NVIDIA Corp.", "base": 176.32, "vol": 1.5, "type": "Stock",
-     "trend": [60, 55, 65, 75, 70, 85, 90, 80, 88, 92]},
-    {"symbol": "EURUSD", "name": "Euro / USD", "base": 1.0854, "vol": 0.0006, "type": "Forex",
-     "trend": [20, 25, 22, 30, 28, 35, 32, 38, 30, 36]},
-    {"symbol": "TSLA", "name": "Tesla Inc.", "base": 247.10, "vol": 3.2, "type": "Stock",
-     "trend": [80, 70, 75, 65, 60, 70, 80, 75, 85, 78]},
-    {"symbol": "USDJPY", "name": "USD / Yen", "base": 149.85, "vol": 0.12, "type": "Forex",
-     "trend": [40, 50, 45, 55, 60, 58, 65, 62, 70, 67]},
-]
 
 
 @router.get("/terminal/pairs")
 async def get_pairs():
-    """Return all pairs with simulated current prices."""
-    # Try to get real prices from MT5 data service
-    live_data = await fetch_json(f"{settings.MT5_DATA_URL}/prices")
+    """Return all MT5 pairs with live prices from Redis scanner data."""
+    await redis_service.connect()
+    try:
+        keys = await redis_service.client.keys("market:*")
+        result = []
+        if keys:
+            pipe = redis_service.client.pipeline()
+            for k in keys:
+                pipe.get(k)
+            values = await pipe.execute()
+            for raw in values:
+                if not raw:
+                    continue
+                try:
+                    d = json.loads(raw)
+                    sym = d.get("symbol", "")
+                    if not sym:
+                        continue
+                    bid = d.get("bid", 0)
+                    ask = d.get("ask", 0)
+                    price = (bid + ask) / 2 if bid and ask else bid or ask
+                    result.append({
+                        "symbol": sym,
+                        "bid": bid,
+                        "ask": ask,
+                        "price": price,
+                        "spread": d.get("spread", 0),
+                        "category": d.get("category", ""),
+                        "time": d.get("time", 0),
+                        "source": "mt5_live",
+                    })
+                except Exception:
+                    continue
+        return {"status": "ok", "count": len(result), "pairs": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    result = []
-    for p in PAIRS:
-        precision = 4 if p["type"] == "Forex" else 2
-        if isinstance(live_data, dict) and "error" not in live_data:
-            price = live_data.get(p["symbol"], p["base"])
-        else:
-            price = p["base"] + (random.random() - 0.5) * p["vol"] * 5
-        result.append({**p, "price": round(price, precision)})
 
-    return {"status": "ok", "pairs": result}
+@router.get("/terminal/market/all")
+async def get_all_market_data():
+    """Return all active scanner symbols snapshot from Redis."""
+    return await get_pairs()
+
+
+@router.get("/terminal/market/{symbol}")
+async def get_market_symbol(symbol: str):
+    """Return live snapshot for a single symbol from MT5 scanner Redis data."""
+    await redis_service.connect()
+    sym = symbol.upper()
+    raw = await redis_service.client.get(f"market:{sym}")
+    if not raw:
+        raise HTTPException(status_code=404, detail=f"No live data for {sym}.")
+    try:
+        d = json.loads(raw)
+        bid = d.get("bid", 0)
+        ask = d.get("ask", 0)
+        price = (bid + ask) / 2 if bid and ask else bid or ask
+        return {
+            "symbol": sym,
+            "bid": bid,
+            "ask": ask,
+            "price": price,
+            "spread": d.get("spread", 0),
+            "category": d.get("category", ""),
+            "time": d.get("time", 0),
+            "source": "mt5_live",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/terminal/market/{symbol}/ohlc")
+async def get_market_ohlc(symbol: str, timeframe: str = "M15", limit: int = 200):
+    """Return OHLCV candles for a symbol from MT5 scanner Redis data."""
+    await redis_service.connect()
+    sym = symbol.upper()
+    key = f"ohlc:{sym}:{timeframe}"
+    raw_list = await redis_service.client.lrange(key, 0, limit - 1)
+    if not raw_list:
+        raise HTTPException(status_code=404, detail=f"No OHLC data for {sym} {timeframe}.")
+    candles = []
+    for raw in raw_list:
+        try:
+            candles.append(json.loads(raw))
+        except Exception:
+            continue
+    # lrange returns newest first — reverse for chronological order
+    candles.reverse()
+    return {
+        "symbol": sym,
+        "timeframe": timeframe,
+        "count": len(candles),
+        "candles": candles,
+        "source": "mt5_live",
+    }

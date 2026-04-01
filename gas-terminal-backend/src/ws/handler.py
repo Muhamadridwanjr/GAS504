@@ -36,10 +36,11 @@ manager = ConnectionManager()
 
 
 async def _redis_price_feed(websocket: WebSocket, symbols: set):
-    """Receive live tick updates from Redis Pub/Sub."""
-    logger.info("starting_redis_feed", host=settings.REDIS_HOST, db=settings.REDIS_DB)
+    """Receive live tick updates from Redis Pub/Sub (hot Redis — MT5 tick source)."""
+    hot_url = settings.REDIS_HOT_URL
+    logger.info("starting_redis_feed", url=hot_url)
     try:
-        r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, decode_responses=True)
+        r = redis.from_url(hot_url, decode_responses=True)
         pubsub = r.pubsub()
         await pubsub.subscribe("market:ticks")
         logger.info("redis_subscribed", channel="market:ticks", host=settings.REDIS_HOST, db=settings.REDIS_DB)

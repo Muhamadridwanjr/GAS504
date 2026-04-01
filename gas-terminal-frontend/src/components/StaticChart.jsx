@@ -5,7 +5,7 @@ export default function StaticChart({ pair, timeframe = 'M15', theme }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://35.197.97.60:8085/terminal';
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || '/terminal';
 
     useEffect(() => {
         if (!pair?.symbol) return;

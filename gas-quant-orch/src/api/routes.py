@@ -37,7 +37,10 @@ async def active_engines():
     return {
         "regime": "active",
         "pattern": "active",
-        "statarb": "active"
+        "statarb": "active",
+        "trend": "active",
+        "phase": "active",
+        "orderflow": "active",
     }
 
 

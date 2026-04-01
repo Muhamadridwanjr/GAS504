@@ -1,47 +1,54 @@
-from fastapi import APIRouter, HTTPException, Depends
+"""
+AI Chat endpoint — routes to gas-strategy-core (OpenRouter/DeepSeek).
+Supports mentor mode, general chat, and all feature types.
+"""
+import os
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from src.config import settings
-from src.services.client import fetch_json, get_client
+import httpx
 import structlog
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/terminal/ai", tags=["AI Chat"])
 
+STRATEGY_CORE_URL = os.getenv("STRATEGY_CORE_URL", "http://gas-strategy-core:7003")
+
+
 class ChatRequest(BaseModel):
     prompt: str
     type: str = "general"
     model_id: Optional[str] = None
+    context: Optional[dict] = None
+
 
 @router.post("/chat")
 async def ai_chat(request: ChatRequest):
-    """Proxy chat request to AI Orchestrator"""
-    url = f"{settings.AI_ORCHESTRATOR_URL}/analyze"
-
-    # We pass a default system user id since the terminal backend might not have user auth overhead yet
-    headers = {
-        "X-User-ID": "terminal-user",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "type": request.type,
-        "prompt": request.prompt,
-        "context": {"source": "web-terminal"},
-        "model_params": {"model_id": request.model_id} if request.model_id else {},
-    }
-    
+    """
+    AI chat endpoint. Routes to gas-strategy-core → OpenRouter → DeepSeek.
+    Supports types: mentor, general, psychology, strategy, review
+    """
     try:
-        client = await get_client()
-        response = await client.post(url, json=payload, headers=headers, timeout=30.0)
-        
-        if response.status_code != 200:
-            logger.error(f"AI Orchestrator returned status {response.status_code}", response=response.text)
-            raise HTTPException(status_code=response.status_code, detail="Failed to communicate with AI Orchestrator")
-            
-        data = response.json()
-        return {"status": "ok", "result": data.get("result", {})}
-        
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            res = await client.post(
+                f"{STRATEGY_CORE_URL}/v1/ai/chat",
+                json={
+                    "prompt": request.prompt,
+                    "type": request.type,
+                    "context": request.context or {},
+                },
+            )
+            if res.status_code == 200:
+                data = res.json()
+                return {"status": "ok", "result": data.get("response", data)}
+            else:
+                logger.error("strategy_core_chat_error", status=res.status_code, body=res.text[:200])
+                raise HTTPException(status_code=res.status_code, detail="AI service error")
+
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="AI response timeout — coba lagi")
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("error_calling_ai_orchestrator", error=str(e))
-        raise HTTPException(status_code=500, detail="Internal Server Error: AI Service Unavailable")
+        logger.error("ai_chat_error", error=str(e))
+        raise HTTPException(status_code=503, detail=f"AI service unavailable: {str(e)}")

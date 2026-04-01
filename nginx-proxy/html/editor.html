@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GAS Content Editor</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg:#08080f;--bg-card:#0d0d18;--bg-hover:#13131f;--bg-input:#0a0a14;
+      --border:#1c1c2e;--border-hi:#2a2a40;
+      --accent:#d4a017;--accent-soft:rgba(212,160,23,.1);--accent-mid:rgba(212,160,23,.2);
+      --text:#e8e8f4;--text-2:#9090b0;--text-dim:#4a4a70;
+      --ok:#10b981;--ok-soft:rgba(16,185,129,.1);
+      --err:#ef4444;--err-soft:rgba(239,68,68,.1);
+      --warn:#f59e0b;--warn-soft:rgba(245,158,11,.1);
+      --info:#3b82f6;--info-soft:rgba(59,130,246,.1);
+      --promo:#a855f7;--promo-soft:rgba(168,85,247,.1);
+      --mono:'JetBrains Mono',monospace;
+    }
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;}
+    /* scrollbar */
+    ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#2a2a40;border-radius:3px}
+
+    /* ── LOGIN ────────────────────────────── */
+    #login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:100;}
+    .lbox{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:44px 40px;width:380px;text-align:center;}
+    .lbadge{width:56px;height:56px;background:linear-gradient(135deg,#d4a017,#f5c842);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#000;margin-bottom:20px;}
+    .lbox h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+    .lbox p{font-size:13px;color:var(--text-2);margin-bottom:28px;}
+    .linput{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-size:14px;font-family:var(--mono);outline:none;transition:border-color .2s;margin-bottom:12px;letter-spacing:2px;}
+    .linput:focus{border-color:var(--accent);}
+    .lbtn{width:100%;background:linear-gradient(135deg,#d4a017,#f5c842);color:#000;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s;letter-spacing:.5px;}
+    .lbtn:hover{box-shadow:0 8px 28px rgba(212,160,23,.35);transform:translateY(-1px);}
+    .lerr{color:var(--err);font-size:12px;margin-top:10px;min-height:18px;}
+
+    /* ── LAYOUT ───────────────────────────── */
+    #app{display:none;height:100%;flex-direction:column;}
+    header{background:var(--bg-card);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:20;}
+    .hlogo{display:flex;align-items:center;gap:10px;}
+    .hbadge{width:30px;height:30px;background:linear-gradient(135deg,#d4a017,#f5c842);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#000;}
+    .hlogo span{font-size:15px;font-weight:700;}
+    .hlogo em{color:var(--accent);font-style:normal;}
+    .hright{display:flex;align-items:center;gap:10px;}
+    .htag{font-size:11px;color:var(--text-dim);font-family:var(--mono);padding:3px 8px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;}
+    .hbtn-out{background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:5px 14px;font-size:12px;cursor:pointer;transition:all .2s;}
+    .hbtn-out:hover{border-color:var(--err);color:var(--err);}
+
+    .body{display:flex;flex:1;overflow:hidden;}
+
+    /* ── SIDEBAR ──────────────────────────── */
+    .sidebar{width:220px;flex-shrink:0;background:var(--bg-card);border-right:1px solid var(--border);padding:16px 10px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
+    .stitle{font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;padding:12px 8px 6px;margin-top:4px;}
+    .stitle:first-child{margin-top:0;}
+    .sitem{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .15s;border:none;background:transparent;width:100%;text-align:left;}
+    .sitem:hover{background:var(--bg-hover);}
+    .sitem.active{background:var(--accent-soft);border:1px solid var(--accent-mid);}
+    .sitem .sicon{font-size:16px;line-height:1;flex-shrink:0;}
+    .sitem .slabel{font-size:13px;font-weight:600;color:var(--text-2);}
+    .sitem.active .slabel{color:var(--accent);}
+    .sitem .sbadge{margin-left:auto;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;}
+
+    /* ── MAIN ─────────────────────────────── */
+    .main{flex:1;overflow-y:auto;padding:24px 28px 48px;}
+    .panel{display:none;}
+    .panel.active{display:block;}
+
+    .phdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:16px;flex-wrap:wrap;}
+    .pinfo h2{font-size:17px;font-weight:800;margin-bottom:5px;}
+    .pinfo p{font-size:12px;color:var(--text-2);line-height:1.6;max-width:560px;}
+    .pinfo .pfile{font-family:var(--mono);font-size:11px;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:5px;display:inline-block;margin-bottom:6px;}
+    .pacts{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+
+    textarea{
+      width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
+      padding:18px 20px;color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.8;
+      resize:vertical;min-height:380px;outline:none;transition:border-color .2s;tab-size:2;
+      white-space:pre;overflow-wrap:normal;overflow-x:auto;
+    }
+    textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+    textarea.tall{min-height:600px;}
+
+    .sbar{margin-top:10px;font-size:12px;min-height:20px;display:flex;align-items:center;gap:6px;padding:0 2px;}
+    .s-ok{color:var(--ok);}.s-err{color:var(--err);}.s-info{color:var(--text-dim);}.s-warn{color:var(--warn);}
+
+    .hint{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-top:16px;}
+    .hint-title{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    .hint ul{margin-left:16px;color:var(--text-2);font-size:12px;line-height:1.9;}
+    .hint code{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-family:var(--mono);color:#7dd3a8;font-size:11px;}
+    .hint table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+    .hint table th{text-align:left;padding:6px 10px;background:var(--bg-hover);color:var(--text-dim);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+    .hint table td{padding:6px 10px;border-top:1px solid var(--border);color:var(--text-2);}
+    .hint table tr:hover td{background:var(--bg-hover);}
+
+    /* buttons */
+    .btn-save{background:linear-gradient(135deg,#d4a017,#f5c842);color:#000;border:none;border-radius:10px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
+    .btn-save:hover{box-shadow:0 6px 20px rgba(212,160,23,.3);transform:translateY(-1px);}
+    .btn-save:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+    .btn-reload{background:var(--bg-hover);border:1px solid var(--border);color:var(--text-2);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+    .btn-reload:hover{border-color:var(--accent);color:var(--accent);}
+    .btn-clear{background:var(--err-soft);border:1px solid rgba(239,68,68,.2);color:var(--err);border-radius:10px;padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+    .btn-clear:hover{background:rgba(239,68,68,.18);}
+
+    /* stat chips */
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+    .chip{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:6px;}
+    .chip strong{color:var(--text);font-weight:700;}
+
+    @media(max-width:700px){
+      .sidebar{display:none;}
+      .main{padding:16px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="lbox">
+    <div class="lbadge">G</div>
+    <h1>GAS Content Editor</h1>
+    <p>Masukkan editor token untuk akses panel konten</p>
+    <input id="tkn" class="linput" type="password" placeholder="Editor token..." autocomplete="off" />
+    <button class="lbtn" onclick="doLogin()">Masuk ke Editor</button>
+    <p class="lerr" id="lerr"></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="hlogo">
+      <div class="hbadge">G</div>
+      <span>GAS <em>Content Editor</em></span>
+    </div>
+    <div class="hright">
+      <span class="htag" id="tkn-display"></span>
+      <a href="https://gasstrategyai.xyz" target="_blank" style="font-size:12px;color:var(--text-dim);text-decoration:none;">↗ Terminal</a>
+      <button class="hbtn-out" onclick="doLogout()">Keluar</button>
+    </div>
+  </header>
+  <div class="body">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="stitle">📄 Konten Feed</div>
+      <button class="sitem active" onclick="go('livenews')" id="nav-livenews">
+        <span class="sicon">📰</span>
+        <span class="slabel">Live News</span>
+      </button>
+      <button class="sitem" onclick="go('breakingnews')" id="nav-breakingnews">
+        <span class="sicon">🚨</span>
+        <span class="slabel">Breaking News</span>
+      </button>
+      <button class="sitem" onclick="go('announcement')" id="nav-announcement">
+        <span class="sicon">📢</span>
+        <span class="slabel">Pengumuman</span>
+      </button>
+
+      <div class="stitle">📊 Data & Analisis</div>
+      <button class="sitem" onclick="go('fundamental')" id="nav-fundamental">
+        <span class="sicon">🏦</span>
+        <span class="slabel">Fundamental</span>
+      </button>
+      <button class="sitem" onclick="go('analysis')" id="nav-analysis">
+        <span class="sicon">🧠</span>
+        <span class="slabel">Analisis Mingguan</span>
+      </button>
+      <button class="sitem" onclick="go('sessions')" id="nav-sessions">
+        <span class="sicon">🕐</span>
+        <span class="slabel">Sesi Pasar</span>
+      </button>
+    </nav>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- LIVE NEWS -->
+      <div id="panel-livenews" class="panel active">
+        <div class="phdr">
+          <div class="pinfo">
+            <div class="pfile">livenews.md</div>
+            <h2>📰 Live News Feed</h2>
+            <p>Berita yang tampil di ticker news bawah terminal. Update setiap hari atau saat event besar. Dikelompokkan per sesi pasar (Asia, Eropa, AS).</p>
+          </div>
+          <div class="pacts">
+            <button class="btn-reload" onclick="load('livenews')">↻ Reload</button>
+            <button class="btn-save" id="save-livenews" onclick="save('livenews')">💾 Simpan</button>
+          </div>
+        </div>
+        <textarea id="ta-livenews" class="tall" spellcheck="false" placeholder="Loading..."></textarea>
+        <div class="sbar" id="sb-livenews"></div>
+        <div class="hint">
+          <div class="hint-title">📋 Format & Panduan</div>
+          <ul>
+            <li>Satu berita per baris: <code>- [HH:MM] Judul berita | Sumber | HIGH</code></li>
+            <li>Impact: <code>HIGH</code> = merah 🔴 | <code>MEDIUM</code> = kuning 🟡 | <code>LOW</code> = abu ⚪</li>
+            <li>Baris diawali <code>&lt;!--</code> diabaikan (komentar)</li>
+            <li>Gunakan heading <code>## 🌏 Asia Session</code> untuk pemisah visual</li>
+            <li>Waktu dalam format WIB (08:30, 14:00, 22:00, dst)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- BREAKING NEWS -->
+      <div id="panel-breakingnews" class="panel">
+        <div class="phdr">
+          <div class="pinfo">
+            <div class="pfile">breakingnews.md</div>
+            <h2>🚨 Breaking News Banner</h2>
+            <p>Banner merah menyala di atas terminal. <strong>Kosongkan semua baris aktif</strong> untuk menonaktifkan banner. Aktifkan dengan menambah baris tanpa komentar.</p>
+          </div>
+          <div class="pacts">
+            <button class="btn-clear" onclick="clearActive('breakingnews')">🗑 Nonaktifkan</button>
+            <button class="btn-reload" onclick="load('breakingnews')">↻ Reload</button>
+            <button class="btn-save" id="save-breakingnews" onclick="save('breakingnews')">💾 Simpan</button>
+          </div>
+        </div>
+        <textarea id="ta-breakingnews" style="min-height:220px;" spellcheck="false" placeholder="Loading..."></textarea>
+        <div class="sbar" id="sb-breakingnews"></div>
+        <div class="hint">
+          <div class="hint-title">📋 Format & Level</div>
+          <table>
+            <tr><th>Tag</th><th>Contoh</th><th>Tampilan</th></tr>
+            <tr><td><code>[URGENT]</code></td><td>FED Emergency Meeting | Bloomberg</td><td>🔴 Merah berkedip</td></tr>
+            <tr><td><code>[HIGH]</code></td><td>Gold spike +3% after CPI beat | Reuters</td><td>🟠 Oranye</td></tr>
+            <tr><td><code>[BREAKING]</code></td><td>Flash crash BTC -15% | CoinDesk</td><td>🔴 Merah solid</td></tr>
+          </table>
+          <ul style="margin-top:10px;">
+            <li>Nonaktifkan: hapus semua baris atau klik tombol <strong>Nonaktifkan</strong></li>
+            <li>Baris yang diawali <code>&lt;!--</code> diabaikan</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ANNOUNCEMENT -->
+      <div id="panel-announcement" class="panel">
+        <div class="phdr">
+          <div class="pinfo">
+            <div class="pfile">announcement.md</div>
+            <h2>📢 Pengumuman Terminal</h2>
+            <p>Notifikasi/banner pengumuman di terminal — promo, maintenance, fitur baru. Kosongkan untuk nonaktifkan.</p>
+          </div>
+          <div class="pacts">
+            <button class="btn-clear" onclick="clearActive('announcement')">🗑 Nonaktifkan</button>
+            <button class="btn-reload" onclick="load('announcement')">↻ Reload</button>
+            <button class="btn-save" id="save-announcement" onclick="save('announcement')">💾 Simpan</button>
+          </div>
+        </div>
+        <textarea id="ta-announcement" style="min-height:220px;" spellcheck="false" placeholder="Loading..."></textarea>
+        <div class="sbar" id="sb-announcement"></div>
+        <div class="hint">
+          <div class="hint-title">📋 Format Pengumuman</div>
+          <table>
+            <tr><th>Tag</th><th>Contoh</th><th>Warna</th></tr>
+            <tr><td><code>[PROMO]</code></td><td>🎉 Promo Ramadan: Upgrade hemat 50% — kode: RAMADAN50 | https://pricing...</td><td>🟣 Ungu</td></tr>
+            <tr><td><code>[INFO]</code></td><td>🔧 Maintenance Sabtu 02:00–04:00 WIB</td><td>🔵 Biru</td></tr>
+            <tr><td><code>[SUCCESS]</code></td><td>✅ Fitur Backtesting v2.0 sudah tersedia!</td><td>🟢 Hijau</td></tr>
+            <tr><td><code>[WARNING]</code></td><td>⚠️ MT5 WebSocket sementara offline</td><td>🟡 Kuning</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- FUNDAMENTAL -->
+      <div id="panel-fundamental" class="panel">
+        <div class="phdr">
+          <div class="pinfo">
+            <div class="pfile">fundamental.md</div>
+            <h2>🏦 Data Fundamental Makro</h2>
+            <p>Data suku bunga, inflasi, GDP, bias bank sentral untuk semua mata uang utama + Gold, BTC, Oil, DXY. Update bulanan atau saat ada data baru.</p>
+          </div>
+          <div class="pacts">
+            <button class="btn-reload" onclick="load('fundamental')">↻ Reload</button>
+            <button class="btn-save" id="save-fundamental" onclick="save('fundamental')">💾 Simpan</button>
+          </div>
+        </div>
+        <textarea id="ta-fundamental" class="tall" spellcheck="false" placeholder="Loading..."></textarea>
+        <div class="sbar" id="sb-fundamental"></div>
+        <div class="hint">
+          <div class="hint-title">📋 Format & Panduan</div>
+          <ul>
+            <li>Header mata uang: <code>## 🇺🇸 USD — United States (Federal Reserve)</code></li>
+            <li>Data: <code>- **Interest Rate**: 4.25–4.50%</code></li>
+            <li>Bias wajib ada: <code>- **Bias**: Hawkish / Dovish / Netral</code></li>
+            <li>Update setelah rilis data: FOMC, NFP, CPI, GDP, PMI, dll</li>
+            <li>Mata uang yang harus ada: USD, EUR, JPY, GBP, AUD, CAD, CHF, NZD, Gold, BTC, Oil, DXY</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ANALYSIS -->
+      <div id="panel-analysis" class="panel">
+        <div class="phdr">
+          <div class="pinfo">
+            <div class="pfile">analysis.md</div>
+            <h2>🧠 Analisis Mingguan</h2>
+            <p>Weekly market brief yang tampil di Market Briefing View. Update setiap Senin pagi atau saat ada perubahan besar. Berisi bias pair, level entry, event minggu ini.</p>
+          </div>
+          <div class="pacts">
+            <button class="btn-reload" onclick="load('analysis')">↻ Reload</button>
+            <button class="btn-save" id="save-analysis" onclick="save('analysis')">💾 Simpan</button>
+          </div>
+        </div>
+        <textarea id="ta-analysis" class="tall" spellcheck="false" placeholder="Loading..."></textarea>
+        <div class="sbar" id="sb-analysis"></div>
+        <div class="hint">
+          <div class="hint-title">📋 Struktur Weekly Brief</div>
+          <ul>
+            <li><code>## 📋 WEEKLY BRIEF — Minggu X, Bulan Tahun</code> — judul minggu ini</li>
+            <li><code>### 🎯 Outlook Minggu Ini</code> — ringkasan narasi pasar</li>
+            <li><code>### 📊 BIAS MINGGUAN</code> — tabel pair, bias, level entry/SL/target</li>
+            <li><code>### ⚠️ EVENT KRITIS MINGGU INI</code> — jadwal berita HIGH impact</li>
+            <li><code>### 🧠 ANALISIS SMC MINGGUAN</code> — BOS, OB, FVG, liquidity level</li>
+            <li><code>### 📰 SENTIMEN PASAR</code> — risk sentiment, Fear & Greed, dll</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- SESSIONS -->
+      <div id="panel-sessions" class="panel">
+        <div class="phdr">
+          <div class="pinfo">
+            <div class="pfile">sessions.md</div>
+            <h2>🕐 Panduan Sesi Pasar</h2>
+            <p>Informasi jam sesi trading (Sydney, Tokyo, London, New York) dalam WIB, pair terbaik per sesi, dan tips strategi. Update saat ada perubahan DST (daylight saving).</p>
+          </div>
+          <div class="pacts">
+            <button class="btn-reload" onclick="load('sessions')">↻ Reload</button>
+            <button class="btn-save" id="save-sessions" onclick="save('sessions')">💾 Simpan</button>
+          </div>
+        </div>
+        <textarea id="ta-sessions" class="tall" spellcheck="false" placeholder="Loading..."></textarea>
+        <div class="sbar" id="sb-sessions"></div>
+        <div class="hint">
+          <div class="hint-title">📋 Update DST</div>
+          <ul>
+            <li><strong>London DST aktif</strong> (Mar–Okt): London buka 1 jam lebih awal — WIB 14:00 → 13:00</li>
+            <li><strong>New York DST aktif</strong> (Mar–Nov): NY buka 1 jam lebih awal — WIB 19:30 → 18:30</li>
+            <li>Update tabel overlap jika jam berubah karena DST</li>
+            <li>Holiday kalender wajib update setiap awal tahun</li>
+          </ul>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /body -->
+</div><!-- /app -->
+
+<script>
+const API = '/terminal/content';
+let token = '';
+let active = 'livenews';
+const FILES = {
+  livenews:     'livenews.md',
+  breakingnews: 'breakingnews.md',
+  announcement: 'announcement.md',
+  fundamental:  'fundamental.md',
+  analysis:     'analysis.md',
+  sessions:     'sessions.md',
+};
+
+// ── Auth ─────────────────────────────────────────────────────────────
+async function doLogin() {
+  const t = document.getElementById('tkn').value.trim();
+  if (!t) return;
+  // Verify token by calling a save attempt on a small payload
+  document.getElementById('lerr').textContent = 'Memverifikasi...';
+  const res = await fetch(`${API}/livenews.md`, { headers: {'X-Editor-Token': t}, method: 'HEAD' }).catch(() => null);
+  // Just try loading — if token is wrong, save will fail; for now trust it
+  token = t;
+  sessionStorage.setItem('gas-et', t);
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('tkn-display').textContent = `🔑 ${t.slice(0,4)}${'●'.repeat(Math.max(0,t.length-4))}`;
+  loadAll();
+}
+function doLogout() {
+  sessionStorage.removeItem('gas-et');
+  token = '';
+  document.getElementById('login').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('tkn').value = '';
+  document.getElementById('lerr').textContent = '';
+}
+document.getElementById('tkn').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+const st = sessionStorage.getItem('gas-et');
+if (st) { document.getElementById('tkn').value = st; doLogin(); }
+
+// ── Navigation ───────────────────────────────────────────────────────
+function go(name) {
+  active = name;
+  document.querySelectorAll('.sitem').forEach(el => el.classList.toggle('active', el.id === 'nav-'+name));
+  document.querySelectorAll('.panel').forEach(el => el.classList.toggle('active', el.id === 'panel-'+name));
+}
+
+// ── Load / Save ──────────────────────────────────────────────────────
+async function load(name) {
+  status(name, '⟳ Memuat...', 'info');
+  try {
+    const r = await fetch(`${API}/${FILES[name]}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    document.getElementById('ta-'+name).value = d.content;
+    const lines = d.content.split('\n').length;
+    status(name, `✓ Dimuat — ${lines} baris`, 'ok');
+  } catch(e) {
+    status(name, `✗ Gagal memuat: ${e.message}`, 'err');
+  }
+}
+
+async function save(name) {
+  const content = document.getElementById('ta-'+name).value;
+  const btn = document.getElementById('save-'+name);
+  btn.disabled = true; btn.textContent = '⟳ Menyimpan...';
+  status(name, '⟳ Menyimpan ke server...', 'info');
+  try {
+    const r = await fetch(`${API}/${FILES[name]}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Editor-Token': token },
+      body: JSON.stringify({ content }),
+    });
+    if (r.status === 401) { status(name, '✗ Token salah! Logout lalu masuk kembali.', 'err'); return; }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    status(name, '✓ Tersimpan! Perubahan langsung aktif di terminal.', 'ok');
+  } catch(e) {
+    status(name, `✗ Gagal simpan: ${e.message}`, 'err');
+  } finally {
+    btn.disabled = false; btn.innerHTML = '💾 Simpan';
+  }
+}
+
+function clearActive(name) {
+  const ta = document.getElementById('ta-'+name);
+  // Keep comment lines, remove active lines
+  const lines = ta.value.split('\n');
+  const cleared = lines.map(l => {
+    const t = l.trim();
+    if (t.startsWith('- [') && !t.startsWith('<!-- ')) return '<!-- ' + l.trim() + ' -->';
+    return l;
+  }).join('\n');
+  ta.value = cleared;
+  status(name, '⚠ Semua baris aktif dinonaktifkan — klik Simpan untuk konfirmasi.', 'warn');
+}
+
+function status(name, msg, type) {
+  const el = document.getElementById('sb-'+name);
+  el.textContent = msg;
+  el.className = 'sbar s-'+type;
+}
+
+function loadAll() {
+  Object.keys(FILES).forEach(k => load(k));
+}
+
+// Ctrl+S / Cmd+S
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    if (document.getElementById('app').style.display !== 'none') save(active);
+  }
+});
+</script>
+</body>
+</html>

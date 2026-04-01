@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://gasstrategyai.xyz/sitemap.xml
+Sitemap: https://blog.gasstrategyai.xyz/sitemap.xml
+Sitemap: https://docs.gasstrategyai.xyz/sitemap.xml
+
+# Disallow private/app routes
+Disallow: /api/
+Disallow: /auth/
+Disallow: /web/
+Disallow: /terminal/
+Disallow: /admin/
+
+# Crawl delay
+Crawl-delay: 1

@@ -8,6 +8,7 @@ logger = structlog.get_logger(__name__)
 class RedisService:
     def __init__(self):
         self.client = None
+        self._hot_client = None  # hot Redis for live MT5 tick prices
 
     async def connect(self):
         if not self.client:
@@ -17,6 +18,24 @@ class RedisService:
                 decode_responses=True
             )
             logger.info("connected_to_redis")
+
+    async def connect_hot(self):
+        """Connect to hot Redis (MT5 live tick prices, no AOF)."""
+        if not self._hot_client:
+            self._hot_client = redis.from_url(
+                settings.REDIS_HOT_URL,
+                encoding="utf-8",
+                decode_responses=True,
+            )
+
+    async def get_market_price(self, symbol: str):
+        """Read live market price from hot Redis (written by gas-mt5-websocket)."""
+        await self.connect_hot()
+        try:
+            raw = await self._hot_client.get(f"market:{symbol.upper()}")
+            return json.loads(raw) if raw else None
+        except Exception:
+            return None
 
     async def get_next_order(self):
         """Pop the next order from the queue."""

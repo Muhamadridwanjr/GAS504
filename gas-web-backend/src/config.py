@@ -15,9 +15,11 @@ class Settings(BaseSettings):
     SIGNAL_SERVICE_URL: str = "http://gas-signal-service:8106"
     TCG_SERVICE_URL: str = "http://gas-tcg-service:8300"
     NOTIFICATION_SERVICE_URL: str = "http://gas-notification-service:8112"
+    STRATEGY_CORE_URL: str = "http://gas-strategy-core:7003"
 
-    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_URL: str = "redis://gas-redis:6379/0"
     LOG_LEVEL: str = "INFO"
+    BOT_API_KEY: str = "gas-bot-key-2026-secret"
 
     class Config:
         env_file = ".env"

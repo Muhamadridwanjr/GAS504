@@ -2,52 +2,52 @@ import asyncio
 from telegram.ext import ApplicationBuilder
 from src.config import settings
 from src.utils.logger import logger, setup_logger
-from src.bot.handlers import register_handlers
-from src.services.gateway_client import gateway_client
+from src.bot.handlers import register_handlers, BOT_COMMANDS
+from src.services import bot_api_client
+from src.workers.runner import run_workers
+
+
+async def _keepalive():
+    """Keep the event loop alive while polling runs."""
+    while True:
+        await asyncio.sleep(3600)
+
 
 async def main():
-    # Setup logger
     setup_logger()
     logger.info("starting_gas_telegram_bot")
 
-    # Initialize Gateway Client
-    is_gateway_up = await gateway_client.check_health()
-    if is_gateway_up:
-        logger.info("gateway_connection_status", status="200 OK")
-    else:
-        logger.warning("gateway_connection_status", status="DOWN", url=settings.GATEWAY_URL)
-
-    # Initialize Telegram Application
-    if not settings.TELEGRAM_BOT_TOKEN or "your_bot_token" in settings.TELEGRAM_BOT_TOKEN:
-        logger.error("missing_bot_token", message="Please set a valid TELEGRAM_BOT_TOKEN in .env")
-        # Keep alive for healthcheck if needed, or exit
+    if not settings.TELEGRAM_BOT_TOKEN or "dummy" in settings.TELEGRAM_BOT_TOKEN:
+        logger.error("missing_bot_token", message="Set a valid TELEGRAM_BOT_TOKEN in .env")
         return
 
     try:
         application = ApplicationBuilder().token(settings.TELEGRAM_BOT_TOKEN).build()
         register_handlers(application)
+        logger.info("running_in_polling_mode")
+        await application.initialize()
+        await application.start()
+        await application.updater.start_polling()
+        # Register bot commands after bot is fully running
+        try:
+            await application.bot.set_my_commands(BOT_COMMANDS)
+            logger.info("bot_commands_registered", count=len(BOT_COMMANDS))
+            print(f"[BOT COMMANDS] Registered {len(BOT_COMMANDS)} commands")
+        except Exception as e:
+            logger.warning("bot_commands_failed", error=str(e))
+            print(f"[BOT COMMANDS] Failed: {e}")
 
-        if settings.TELEGRAM_WEBHOOK_URL:
-            logger.info("running_in_webhook_mode", url=settings.TELEGRAM_WEBHOOK_URL)
-            # await application.run_webhook(...)
-        else:
-            logger.info("running_in_polling_mode")
-            try:
-                await application.initialize()
-                await application.start()
-                await application.updater.start_polling()
-            except Exception as e:
-                logger.error("bot_polling_error", error=str(e), message="Bot failed to start polling. Check your token.")
-            
-            # Keep alive for healthcheck
-            while True:
-                await asyncio.sleep(3600)
-                
+        # Run bot polling + worker pool concurrently on the same event loop
+        await asyncio.gather(
+            _keepalive(),
+            run_workers(application.bot),
+            return_exceptions=True,
+        )
     except Exception as e:
         logger.error("bot_runtime_error", error=str(e))
     finally:
         try:
-            await gateway_client.close()
+            await bot_api_client.close()
         except Exception:
             pass
 

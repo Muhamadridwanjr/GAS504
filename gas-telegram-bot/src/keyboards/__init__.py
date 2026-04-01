@@ -25,6 +25,12 @@ from .ai_analyst import (
     trading_style_keyboard
 )
 from .profile_init import init_step_keyboard, init_success_keyboard
+from .market import (
+    market_category_keyboard, forex_market_keyboard,
+    crypto_market_keyboard, commodity_market_keyboard, index_market_keyboard,
+    CAT_KEYBOARDS,
+)
+from .style import style_keyboard, confirm_analysis_keyboard
 
 __all__ = [
     'start_menu_keyboard', 'trial_menu_keyboard',
@@ -45,5 +51,10 @@ __all__ = [
     'ai_instrument_category_keyboard', 'forex_pairs_keyboard',
     'crypto_pairs_keyboard', 'commodity_pairs_keyboard',
     'trading_style_keyboard',
-    'init_step_keyboard', 'init_success_keyboard'
+    'init_step_keyboard', 'init_success_keyboard',
+    # v2 keyboards
+    'market_category_keyboard', 'forex_market_keyboard',
+    'crypto_market_keyboard', 'commodity_market_keyboard', 'index_market_keyboard',
+    'CAT_KEYBOARDS',
+    'style_keyboard', 'confirm_analysis_keyboard',
 ]

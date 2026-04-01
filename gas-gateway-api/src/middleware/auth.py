@@ -17,6 +17,11 @@ PUBLIC_PATHS = [
     "/api/auth/v1/register",
     "/api/auth/v1/health",
     "/api/v1/telegram/webhook",
+    # Public signal endpoints (EA access + frontend preview)
+    "/api/signal",
+    "/api/v1/signals",
+    # Terminal overview (public market data)
+    "/api/terminal",
     "/docs",
     "/redoc",
     "/openapi.json",

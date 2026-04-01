@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     CACHE_TTL_SECONDS: int = 30
+    # Hot Redis — ephemeral tick data from MT5 (no AOF)
+    REDIS_HOT_URL: str = "redis://gas-redis-hot:6379/0"
 
     # ── Internal gateway key (for service-to-service) ─────────────────
     GATEWAY_API_KEY: str = ""
@@ -36,8 +38,14 @@ class Settings(BaseSettings):
     INDICATOR_ENGINE_URL: str = "http://gas-indicator-engine:8203"
     REALTIME_HUB_URL: str = "http://gas-realtime-hub:8111"
     SCREENER_URL: str = "http://gas-screener-service:9600"
+    ALERT_ENGINE_URL: str = "http://gas-alert-engine:8400"
+    BACKTESTER_URL: str = "http://gas-quant-backtester:9504"
     QUANT_ORCH_URL: str = "http://gas-quant-orch:9500"
     TERM_SERVICE_URL: str = "http://gas-term-service:8205"
+    STRATEGY_CORE_URL: str = "http://gas-strategy-core:7003"
+    BINANCE_SERVICE_URL: str = "http://gas-binance-service:9612"
+    POLYMARKET_SERVICE_URL: str = "http://gas-polymarket-service:9613"
+    MEMECOIN_SERVICE_URL: str = "http://gas-memecoin-service:9614"
 
     # ── CORS ───────────────────────────────────────────────────────────
     CORS_ORIGINS: str = "*"
