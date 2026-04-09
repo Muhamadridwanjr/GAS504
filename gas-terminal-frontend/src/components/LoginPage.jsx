@@ -3,7 +3,7 @@ import { ArrowLeft, Zap, BarChart2, Shield, Brain, TrendingUp, Check } from 'luc
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
-const LOGO = 'https://i.ibb.co.com/603h1JF3/photo-2026-01-27-22-14-18.jpg';
+const LOGO = '/logo-new.png';
 const MONO = "'JetBrains Mono','Fira Code','Courier New',monospace";
 
 const MODES = [

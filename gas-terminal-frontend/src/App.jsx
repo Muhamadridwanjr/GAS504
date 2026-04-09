@@ -43,7 +43,7 @@ const PAGE_LABELS = [
 ];
 
 function TelegramBotView() {
-  const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'GoldenAIStrategyBot';
+  const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'goldenaistrategy_bot';
   const SITE_URL = window.location.origin;
   return (
     <div style={{ padding: '32px 24px', maxWidth: 720, margin: '0 auto' }}>
@@ -330,7 +330,7 @@ function Terminal() {
         <aside className={`gas-sidebar${sidebarCollapsed ? ' gas-sidebar--col' : ''}${sidebarOpen ? ' gas-sidebar--open' : ''}`}>
 
           <div className="gas-sb-logo">
-            <img src="https://i.ibb.co.com/603h1JF3/photo-2026-01-27-22-14-18.jpg" alt="GAS" style={{ width: '34px', height: '34px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0, border: '1.5px solid var(--gas-gold-dim)' }} />
+            <img src="/logo-new.png" alt="GAS" style={{ width: '34px', height: '34px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0, border: '1.5px solid var(--gas-gold-dim)' }} />
             <div className="gas-sb-text">
               <div className="gas-sb-name">GAS</div>
               <div className="gas-sb-sub">Golden AI Strategy</div>

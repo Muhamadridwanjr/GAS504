@@ -28,14 +28,16 @@ async def main():
         await application.initialize()
         await application.start()
         await application.updater.start_polling()
-        # Register bot commands after bot is fully running
+        # Set bot name and commands
         try:
+            await application.bot.set_my_name("Golden AI Strategy")
             await application.bot.set_my_commands(BOT_COMMANDS)
-            logger.info("bot_commands_registered", count=len(BOT_COMMANDS))
-            print(f"[BOT COMMANDS] Registered {len(BOT_COMMANDS)} commands")
+            logger.info("bot_metadata_updated", name="Golden AI Strategy", commands_count=len(BOT_COMMANDS))
+            print(f"[BOT] Name set to: Golden AI Strategy")
+            print(f"[BOT] Registered {len(BOT_COMMANDS)} commands")
         except Exception as e:
-            logger.warning("bot_commands_failed", error=str(e))
-            print(f"[BOT COMMANDS] Failed: {e}")
+            logger.warning("bot_metadata_failed", error=str(e))
+            print(f"[BOT] Metadata update failed: {e}")
 
         # Run bot polling + worker pool concurrently on the same event loop
         await asyncio.gather(

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import PricingView from './PricingView';
 
-const LOGO = 'https://i.ibb.co.com/603h1JF3/photo-2026-01-27-22-14-18.jpg';
+const LOGO = '/logo-new.png';
 
 const MONO = "'JetBrains Mono', 'Fira Code', 'Courier New', monospace";
 

@@ -562,7 +562,7 @@ export default function DashboardView({ onSelectMode, prices = {}, pairs = [] })
       <div className="flex flex-col items-center text-center py-6 gap-4">
         <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-[var(--accent)]/30 shadow-[0_0_30px_rgba(250,204,21,0.15)]">
           <img
-            src="https://i.ibb.co.com/603h1JF3/photo-2026-01-27-22-14-18.jpg"
+            src="/logo-new.png"
             alt="GAS"
             className="w-full h-full object-cover"
           />

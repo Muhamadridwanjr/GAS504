@@ -249,7 +249,7 @@ function TelegramLinkTab({ token, tgStatus, setTgStatus, tgLinkUrl, setTgLinkUrl
             Akun Telegram Terhubung!
           </p>
           <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 16, lineHeight: 1.6 }}>
-            Buka bot <strong>@GoldenAIStrategyBot</strong> dan ketik /start untuk mulai.
+            Buka bot <strong>@goldenaistrategy_bot</strong> dan ketik /start untuk mulai.
           </p>
           {tgMsg && <p style={{ color: '#22c55e', fontSize: 12, marginBottom: 12 }}>{tgMsg}</p>}
           <button style={btn('#ef4444', '#fff')} onClick={unlink} disabled={loading}>
@@ -266,7 +266,7 @@ function TelegramLinkTab({ token, tgStatus, setTgStatus, tgLinkUrl, setTgLinkUrl
               Cara Menghubungkan
             </p>
             {[
-              { n: '1', text: 'Buka bot Telegram: @GoldenAIStrategyBot' },
+              { n: '1', text: 'Buka bot Telegram: @goldenaistrategy_bot' },
               { n: '2', text: 'Ketik /link → bot akan kirimkan kode 8 karakter' },
               { n: '3', text: 'Masukkan kode tersebut di form di bawah ini' },
             ].map(s => (
@@ -275,7 +275,7 @@ function TelegramLinkTab({ token, tgStatus, setTgStatus, tgLinkUrl, setTgLinkUrl
                 <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{s.text}</p>
               </div>
             ))}
-            <a href="https://t.me/GoldenAIStrategyBot" target="_blank" rel="noopener noreferrer"
+            <a href="https://t.me/goldenaistrategy_bot" target="_blank" rel="noopener noreferrer"
                style={{ display: 'inline-block', marginTop: 4, padding: '8px 18px', background: '#0088cc', color: '#fff', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
               📲 Buka Bot Telegram
             </a>

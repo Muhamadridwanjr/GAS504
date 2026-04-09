@@ -24,10 +24,10 @@
   --border-glow:     rgba(250, 200, 21, 0.5);
 
   /* ── Text ────────────────────────────── */
-  --text-primary:   #f8f8fa;
-  --text-secondary: #a8a8b3;
-  --text-dim:       #52525e;
-  --text-muted:     #3a3a44;
+  --text-primary:   #FFFFFF;
+  --text-secondary: #E4E4E7; /* Zinc-200 — High Contrast */
+  --text-dim:       #A1A1AA; /* Zinc-400 — Accessible Dim */
+  --text-muted:     #71717A; /* Zinc-500 — Safe Muted */
 
   /* ── Accent Gold (Brand) ─────────────── */
   --accent:         #fac815;
@@ -181,9 +181,10 @@
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .card-luxury:hover {
-    border-color: var(--border-accent);
+    border-color: var(--accent);
     box-shadow: var(--shadow-md), var(--accent-glow);
-    transform: translateY(-2px);
+    background: var(--bg-hover);
+    transform: translateY(-4px);
   }
 
   /* Plan badges */

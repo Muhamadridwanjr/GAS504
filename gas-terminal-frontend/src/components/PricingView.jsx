@@ -278,21 +278,21 @@ function CheckIcon() {
   return <Check size={14} className="text-[var(--success)] shrink-0" />;
 }
 function CrossIcon() {
-  return <X size={14} className="text-[var(--text-dim)]/40 shrink-0" />;
+  return <X size={14} className="text-[var(--text-muted)] shrink-0" />;
 }
 
 function PlanBadge({ plan }) {
   if (plan.id === 'ultimate') {
     return (
-      <span className="inline-flex items-center gap-1 bg-purple-500/20 text-purple-300 text-[9px] font-black px-2 py-0.5 rounded-full border border-purple-500/30 uppercase tracking-widest">
-        <Crown size={9} /> Ultimate
+      <span className="inline-flex items-center gap-1.5 bg-purple-500/25 text-purple-200 text-[10px] font-black px-3 py-1 rounded-full border border-purple-500/40 uppercase tracking-widest shadow-lg shadow-purple-500/20">
+        <Crown size={10} /> Ultimate
       </span>
     );
   }
   if (plan.badge === 'Most Popular') {
     return (
-      <span className="inline-flex items-center gap-1 bg-yellow-400/20 text-[var(--accent)] text-[9px] font-black px-2 py-0.5 rounded-full border border-yellow-400/30 uppercase tracking-widest">
-        <Star size={9} /> Most Popular
+      <span className="inline-flex items-center gap-1.5 bg-yellow-400/25 text-yellow-100 text-[10px] font-black px-3 py-1 rounded-full border border-yellow-400/40 uppercase tracking-widest shadow-lg shadow-yellow-400/20 animate-pulse">
+        <Star size={10} /> Most Popular
       </span>
     );
   }
@@ -401,7 +401,7 @@ function ERC20PaymentModal({ invoice, onClose, onSuccess }) {
             </div>
             <div>
               <p className="text-sm font-black text-[var(--text-primary)]">Bayar dengan USDT ERC-20</p>
-              <p className="text-[10px] text-[var(--text-dim)] font-bold">{invoice?.package} · {invoice?.credits} Credits</p>
+              <p className="text-[11px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">{invoice?.package} · {invoice?.credits} Credits</p>
             </div>
           </div>
           <button onClick={onClose} className="w-7 h-7 rounded-lg bg-[var(--bg-hover)] flex items-center justify-center hover:bg-red-500/20 transition-colors">
@@ -756,7 +756,7 @@ const PricingView = ({ publicMode = false }) => {
               <Crown size={22} className="text-[var(--accent)]" />
             </div>
             <div>
-              <p className="text-[10px] text-[var(--text-dim)] font-black uppercase tracking-widest">Current Plan</p>
+              <p className="text-[11px] text-[var(--text-dim)] font-black uppercase tracking-widest">Current Plan</p>
               <p className="text-base font-black capitalize text-[var(--text-primary)]">
                 {mockStatus.plan === 'trial' ? '🎁 Trial' : mockStatus.plan}
                 {' '}<span className={`font-normal text-xs ${mockStatus.is_trial ? 'text-blue-400' : 'text-[var(--text-dim)]'}`}>
@@ -838,12 +838,12 @@ const PricingView = ({ publicMode = false }) => {
           {activeTab === 'plans' && (
             <>
               {/* Header */}
-              <div className="text-center space-y-2">
-                <h1 className="text-3xl font-black font-display tracking-tight">
+              <div className="text-center space-y-3 mb-4">
+                <h1 className="text-4xl font-black font-display tracking-tighter bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent">
                   GAS <span className="text-[var(--accent)]">AI PLANS</span>
                 </h1>
-                <p className="text-xs text-[var(--text-dim)] font-bold uppercase tracking-widest">
-                  Choose the plan that powers your edge
+                <p className="text-[11px] text-[var(--text-dim)] font-black uppercase tracking-[0.2em] opacity-80">
+                  Select the engine that powers your financial edge
                 </p>
               </div>
 
@@ -908,8 +908,8 @@ const PricingView = ({ publicMode = false }) => {
                             <span className="text-sm font-black uppercase tracking-widest" style={{ color: plan.color }}>{plan.name}</span>
                           </div>
                           {isCurrent && (
-                            <span className="inline-flex items-center gap-1 bg-yellow-400/15 text-[var(--accent)] text-[9px] font-black px-2 py-0.5 rounded-full border border-yellow-400/25 uppercase tracking-widest">
-                              <Check size={8} /> Current Plan
+                            <span className="inline-flex items-center gap-1.5 bg-yellow-400/20 text-yellow-200 text-[10px] font-black px-3 py-1 rounded-full border border-yellow-400/40 uppercase tracking-widest animate-pulse">
+                              <CheckCircle size={10} /> Active Plan
                             </span>
                           )}
                         </div>
@@ -928,13 +928,13 @@ const PricingView = ({ publicMode = false }) => {
                         </div>
 
                         {/* Credits */}
-                        <div className="bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-xl px-3 py-2.5">
+                        <div className="bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-xl px-3 py-3 shadow-inner">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
-                              <Zap size={12} className="text-[var(--accent)]" />
-                              <span className="text-[11px] font-black text-[var(--text-primary)]">{plan.credits} cr / mo</span>
+                              <Zap size={14} className="text-[var(--accent)]" />
+                              <span className="text-[12px] font-black text-[var(--text-primary)]">{plan.credits} cr / mo</span>
                             </div>
-                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${plan.rollover ? 'bg-blue-500/15 text-blue-400' : 'bg-[var(--bg-hover)] text-[var(--text-dim)]'}`}>
+                            <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${plan.rollover ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-[var(--bg-hover)] text-[var(--text-secondary)] border border-[var(--border-color)]'}`}>
                               {plan.rollover ? `${plan.rollover} rollover` : 'No rollover'}
                             </span>
                           </div>
@@ -942,15 +942,15 @@ const PricingView = ({ publicMode = false }) => {
 
                         {/* AI Models */}
                         <div>
-                          <p className="text-[9px] text-[var(--text-dim)] font-black uppercase tracking-widest mb-2">AI Models</p>
-                          <div className="space-y-1.5">
+                          <p className="text-[10px] text-[var(--text-dim)] font-black uppercase tracking-widest mb-3">AI Models</p>
+                          <div className="space-y-2">
                             {plan.models.map(m => (
                               <div key={m.name} className="flex items-center justify-between">
-                                <div className="flex items-center gap-1.5">
-                                  <Bot size={10} className="text-[var(--text-dim)] shrink-0" />
-                                  <span className="text-[10px] font-bold text-[var(--text-secondary)]">{m.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <Bot size={12} className="text-[var(--text-dim)] shrink-0" />
+                                  <span className="text-[11px] font-bold text-[var(--text-secondary)]">{m.name}</span>
                                 </div>
-                                <span className="text-[9px] font-black bg-[var(--bg-panel)] border border-[var(--border-color)] px-1.5 py-0.5 rounded text-[var(--text-dim)]">{m.mult}</span>
+                                <span className="text-[10px] font-black bg-[var(--bg-panel)] border border-[var(--border-color)] px-2 py-0.5 rounded-lg text-[var(--text-dim)]">{m.mult}</span>
                               </div>
                             ))}
                           </div>
@@ -958,18 +958,18 @@ const PricingView = ({ publicMode = false }) => {
 
                         {/* Brokers */}
                         <div>
-                          <p className="text-[9px] text-[var(--text-dim)] font-black uppercase tracking-widest mb-2">Broker Access</p>
-                          <div className="space-y-1">
+                          <p className="text-[10px] text-[var(--text-dim)] font-black uppercase tracking-widest mb-3">Broker Access</p>
+                          <div className="space-y-2">
                             {plan.brokers.map(b => (
-                              <div key={b} className="flex items-center gap-1.5">
-                                <Check size={10} className="text-[var(--success)] shrink-0" />
-                                <span className="text-[10px] text-[var(--text-secondary)]">{b}</span>
+                              <div key={b} className="flex items-center gap-2">
+                                <Check size={12} className="text-[var(--success)] shrink-0" />
+                                <span className="text-[11px] font-bold text-[var(--text-secondary)]">{b}</span>
                               </div>
                             ))}
                             {plan.brokersNo.map(b => (
-                              <div key={b} className="flex items-center gap-1.5">
-                                <X size={10} className="text-[var(--text-dim)]/40 shrink-0" />
-                                <span className="text-[10px] text-[var(--text-dim)]">{b}</span>
+                              <div key={b} className="flex items-center gap-2">
+                                <X size={12} className="text-[var(--text-dim)] shrink-0" />
+                                <span className="text-[11px] text-[var(--text-dim)] font-medium line-through decoration-[var(--text-dim)]/50">{b}</span>
                               </div>
                             ))}
                           </div>
@@ -977,20 +977,20 @@ const PricingView = ({ publicMode = false }) => {
 
                         {/* Features summary */}
                         <div className="flex-1">
-                          <p className="text-[9px] text-[var(--text-dim)] font-black uppercase tracking-widest mb-2">Key Features</p>
-                          <div className="space-y-1">
+                          <p className="text-[10px] text-[var(--accent)] font-black uppercase tracking-widest mb-3">Key Features</p>
+                          <div className="space-y-2">
                             {FEATURE_GROUPS.flatMap(g => g.features)
                               .filter(f => f[plan.id])
                               .slice(0, 6)
                               .map(f => (
-                                <div key={f.name} className="flex items-center gap-1.5">
-                                  <Check size={10} className="text-[var(--success)] shrink-0" />
-                                  <span className="text-[10px] text-[var(--text-secondary)]">{f.name} <span className="text-[var(--text-dim)]">({f.cr} cr)</span></span>
+                                <div key={f.name} className="flex items-center gap-2">
+                                  <Check size={12} className="text-[var(--success)] shrink-0" />
+                                  <span className="text-[11px] font-bold text-[var(--text-secondary)] leading-tight">{f.name} <span className="text-[var(--text-dim)] text-[10px]">({f.cr} cr)</span></span>
                                 </div>
                               ))}
                             {FEATURE_GROUPS.flatMap(g => g.features).filter(f => f[plan.id]).length > 6 && (
-                              <button onClick={() => setActiveTab('features')} className="text-[10px] text-[var(--accent)] font-bold hover:underline flex items-center gap-1 mt-1">
-                                +{FEATURE_GROUPS.flatMap(g => g.features).filter(f => f[plan.id]).length - 6} more features <ChevronRight size={10} />
+                              <button onClick={() => setActiveTab('features')} className="text-[11px] text-[var(--accent)] font-black hover:underline flex items-center gap-1 mt-2">
+                                +{FEATURE_GROUPS.flatMap(g => g.features).filter(f => f[plan.id]).length - 6} more features <ChevronRight size={11} />
                               </button>
                             )}
                           </div>
@@ -1048,8 +1048,8 @@ const PricingView = ({ publicMode = false }) => {
               <div className="rounded-2xl border border-[var(--border-color)] overflow-hidden bg-[var(--bg-card)]">
                 {/* Header row */}
                 <div className="grid grid-cols-[1fr_repeat(5,70px)] md:grid-cols-[1fr_repeat(5,90px)] bg-[var(--bg-panel)] border-b border-[var(--border-color)]">
-                  <div className="px-4 py-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[var(--text-dim)]">Feature</p>
+                  <div className="px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Feature Matrix</p>
                   </div>
                   {PLANS.map(plan => (
                     <div key={plan.id} className="px-2 py-3 text-center border-l border-[var(--border-color)]">
@@ -1071,9 +1071,9 @@ const PricingView = ({ publicMode = false }) => {
                         className={`grid grid-cols-[1fr_repeat(5,70px)] md:grid-cols-[1fr_repeat(5,90px)] border-b border-[var(--border-color)] transition-colors hover:bg-[var(--bg-hover)]
                           ${fi % 2 === 1 ? 'bg-[var(--bg-main)]/30' : ''}`}
                       >
-                        <div className="px-4 py-2.5 flex items-center gap-2">
-                          <p className="text-[11px] font-bold text-[var(--text-secondary)]">{feature.name}</p>
-                          {feature.cr > 0 && <span className="text-[9px] text-[var(--text-dim)] font-black bg-[var(--bg-panel)] px-1.5 py-0.5 rounded border border-[var(--border-color)]">{feature.cr} cr</span>}
+                        <div className="px-4 py-3 flex items-center gap-3">
+                          <p className="text-[12px] font-bold text-[var(--text-primary)]">{feature.name}</p>
+                          {feature.cr > 0 && <span className="text-[10px] text-[var(--text-secondary)] font-black bg-[var(--bg-panel)] px-2 py-0.5 rounded-lg border border-[var(--border-color)] shadow-sm">{feature.cr} cr</span>}
                         </div>
                         {(['essential', 'plus', 'premium', 'ultimate', 'ultra']).map(planId => (
                           <div key={planId} className={`flex items-center justify-center border-l border-[var(--border-color)] py-2.5 ${planId === 'ultra' ? 'bg-rose-500/5' : ''}`}>

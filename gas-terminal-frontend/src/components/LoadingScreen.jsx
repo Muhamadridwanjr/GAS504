@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-const LOGO = 'https://i.ibb.co.com/603h1JF3/photo-2026-01-27-22-14-18.jpg';
+const LOGO = '/logo-new.png';
 const MONO = "'JetBrains Mono','Fira Mono','Courier New',monospace";
 
 const STEPS = [

@@ -62,7 +62,7 @@ export default function LinkTelegramPage() {
   return (
     <div style={s.wrap}>
       <div style={s.card}>
-        <img src="https://i.ibb.co.com/603h1JF3/photo-2026-01-27-22-14-18.jpg" alt="GAS" style={s.logo} />
+        <img src="/logo-new.png" alt="GAS" style={s.logo} />
         <h2 style={s.h2}>Hubungkan Telegram ke GAS</h2>
         <p style={s.sub}>Golden AI Strategy Bot</p>
 
