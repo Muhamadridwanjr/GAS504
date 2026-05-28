@@ -27,3 +27,6 @@ htmlcov/
 
 # Docker volumes
 chroma-data/
+
+# GCP Credentials
+credentials/google_credentials.json

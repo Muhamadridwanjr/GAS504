@@ -49,3 +49,6 @@ _agent/
 brain/
 walkthrough-backups/
 .aider*
+
+# GCP Credentials
+gas-ai-orchestrator/credentials/google_credentials.json
